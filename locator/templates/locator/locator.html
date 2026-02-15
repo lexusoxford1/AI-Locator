@@ -1,57 +1,118 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AI Locator with Suggestions</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Locator - Professional Address Finder</title>
+    <link rel="stylesheet" href="{% static 'locator/locator.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<h2>AI Locator</h2>
+    <div class="container">
+        <div class="header">
+            <h2>📍 AI Locator</h2>
+            <p>Find and validate addresses with precision</p>
+        </div>
+        
+        <div class="content">
+            <div class="search-section">
+                <form method="post" id="location-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input 
+                            id="address-input" 
+                            type="text" 
+                            name="address" 
+                            placeholder="Enter an address (e.g., 123 Main St, Manila)" 
+                            autocomplete="off"
+                            required
+                        >
+                        
+                        <!-- Hidden parsed fields -->
+                        <input type="hidden" name="latitude" id="latitude">
+                        <input type="hidden" name="longitude" id="longitude">
+                        <input type="hidden" name="street" id="street">
+                        <input type="hidden" name="city" id="city">
+                        <input type="hidden" name="province" id="province">
+                        <input type="hidden" name="country" id="country">
+                        <input type="hidden" name="zip_code" id="zip_code">
+                        
+                        <button type="submit" id="submit-btn">
+                            <span class="btn-text">Locate Address</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
 
-<form method="post">
-    {% csrf_token %}
-    <input id="address-input" type="text" name="address" placeholder="Enter address" size="50" autocomplete="off">
+            {% if result %}
+            <div class="results-section fade-in">
+                <h3>📍 Parsed Address Details</h3>
+                <div class="address-details">
+                    <ul>
+                        <li>
+                            <strong>Address Line:</strong>
+                            <span>{{ result.address_line }}</span>
+                        </li>
+                        <li>
+                            <strong>Street:</strong>
+                            <span>{{ result.street|default:"Not provided" }}</span>
+                        </li>
+                        <li>
+                            <strong>City:</strong>
+                            <span>{{ result.city|default:"Not provided" }}</span>
+                        </li>
+                        <li>
+                            <strong>Province:</strong>
+                            <span>{{ result.province|default:"Not provided" }}</span>
+                        </li>
+                        <li>
+                            <strong>Country:</strong>
+                            <span>{{ result.country|default:"Not provided" }}</span>
+                        </li>
+                        <li>
+                            <strong>Zip Code:</strong>
+                            <span>{{ result.zip_code|default:"Not provided" }}</span>
+                        </li>
+                        <li>
+                            <strong>Latitude:</strong>
+                            <span>{{ result.latitude|default:"Not provided" }}</span>
+                        </li>
+                        <li>
+                            <strong>Longitude:</strong>
+                            <span>{{ result.longitude|default:"Not provided" }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
 
-    <!-- Hidden parsed fields -->
-    <input type="hidden" name="latitude" id="latitude">
-    <input type="hidden" name="longitude" id="longitude">
-    <input type="hidden" name="street" id="street">
-    <input type="hidden" name="city" id="city">
-    <input type="hidden" name="province" id="province">
-    <input type="hidden" name="country" id="country">
-    <input type="hidden" name="zip_code" id="zip_code">
+            {% if result.latitude and result.longitude %}
+            <div class="map-section fade-in">
+                <h3>🗺️ Location Map</h3>
+                <div class="map-container">
+                    <iframe
+                        loading="lazy"
+                        allowfullscreen
+                        referrerpolicy="no-referrer-when-downgrade"
+                        src="https://www.google.com/maps/embed/v1/place?key={{ GOOGLE_GEOCODING_API_KEY }}&q={{ result.latitude }},{{ result.longitude }}">
+                    </iframe>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if not result %}
+            <div class="empty-state">
+                <i>🔍</i>
+                <p>Enter an address above to get started</p>
+                <small>Start typing to see suggestions</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 
-    <button type="submit">Locate</button>
-</form>
-
-{% if result %}
-<h3>Parsed Address:</h3>
-<ul>
-    <li>Address Line: {{ result.address_line }}</li>
-    <li>Street: {{ result.street }}</li>
-    <li>City: {{ result.city }}</li>
-    <li>Province: {{ result.province }}</li>
-    <li>Country: {{ result.country }}</li>
-    <li>Zip Code: {{ result.zip_code }}</li>
-    <li>Latitude: {{ result.latitude }}</li>
-    <li>Longitude: {{ result.longitude }}</li>
-</ul>
-{% endif %}
-
-{% if result.latitude and result.longitude %}
-<h3>Location Map:</h3>
-<iframe
-    width="600"
-    height="450"
-    style="border:0"
-    loading="lazy"
-    allowfullscreen
-    referrerpolicy="no-referrer-when-downgrade"
-    src="https://www.google.com/maps/embed/v1/place?key={{ GOOGLE_GEOCODING_API_KEY }}&q={{ result.latitude }},{{ result.longitude }}">
-</iframe>
-{% endif %}
-
-<!-- Google Maps API -->
-<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
-<script src="{% static 'locator/locator.js' %}"></script>
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
+    <script src="{% static 'locator/locator.js' %}"></script>
 </body>
 </html>
