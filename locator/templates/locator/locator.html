@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Locator with Suggestions</title>
+</head>
+<body>
+<h2>AI Locator</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <input id="address-input" type="text" name="address" placeholder="Enter address" size="50" autocomplete="off">
+
+    <!-- Hidden parsed fields -->
+    <input type="hidden" name="latitude" id="latitude">
+    <input type="hidden" name="longitude" id="longitude">
+    <input type="hidden" name="street" id="street">
+    <input type="hidden" name="city" id="city">
+    <input type="hidden" name="province" id="province">
+    <input type="hidden" name="country" id="country">
+    <input type="hidden" name="zip_code" id="zip_code">
+
+    <button type="submit">Locate</button>
+</form>
+
+{% if result %}
+<h3>Parsed Address:</h3>
+<ul>
+    <li>Address Line: {{ result.address_line }}</li>
+    <li>Street: {{ result.street }}</li>
+    <li>City: {{ result.city }}</li>
+    <li>Province: {{ result.province }}</li>
+    <li>Country: {{ result.country }}</li>
+    <li>Zip Code: {{ result.zip_code }}</li>
+    <li>Latitude: {{ result.latitude }}</li>
+    <li>Longitude: {{ result.longitude }}</li>
+</ul>
+{% endif %}
+
+{% if result.latitude and result.longitude %}
+<h3>Location Map:</h3>
+<iframe
+    width="600"
+    height="450"
+    style="border:0"
+    loading="lazy"
+    allowfullscreen
+    referrerpolicy="no-referrer-when-downgrade"
+    src="https://www.google.com/maps/embed/v1/place?key={{ GOOGLE_GEOCODING_API_KEY }}&q={{ result.latitude }},{{ result.longitude }}">
+</iframe>
+{% endif %}
+
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
+<script src="{% static 'locator/locator.js' %}"></script>
+</body>
+</html>
