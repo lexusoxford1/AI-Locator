@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Locator - Professional Address Finder</title>
     <link rel="stylesheet" href="{% static 'locator/locator.css' %}">
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&loading=async"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -20,14 +21,16 @@
                 <form method="post" id="location-form">
                     {% csrf_token %}
                     <div class="form-group">
-                        <input 
-                            id="address-input" 
-                            type="text" 
-                            name="address" 
-                            placeholder="Enter an address (e.g., 123 Main St, Manila)" 
-                            autocomplete="off"
-                            required
-                        >
+                        <div class="search-wrapper">
+                            <input 
+                                id="address-input" 
+                                type="text" 
+                                name="address" 
+                                placeholder="Enter an address (e.g., 123 Main St, Manila)" 
+                                autocomplete="off"
+                                required
+                            >
+                            <div id="suggestions-container" class="suggestions-container"></div>
                         
                         <!-- Hidden parsed fields -->
                         <input type="hidden" name="latitude" id="latitude">
@@ -110,9 +113,221 @@
             {% endif %}
         </div>
     </div>
-
-    <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&callback=initAutocomplete" async defer></script>
     <script src="{% static 'locator/locator.js' %}"></script>
+<script>
+// ===========================================
+// AI SUGGESTIONS - AUTO-SEARCH ON CLICK (NO ALERT)
+// ===========================================
+
+console.log("🚀 Loading AI Suggestions...");
+
+window.initAutocomplete = function() {
+    console.log("🗺️ Google Maps loaded");
+    
+    const input = document.getElementById('address-input');
+    if (!input) {
+        console.error("Input not found");
+        return;
+    }
+    
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+        types: ['address'],
+        componentRestrictions: { country: 'ph' }
+    });
+    
+    autocomplete.setFields(['address_components', 'geometry', 'formatted_address']);
+    
+    autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        console.log("📍 Google Place selected:", place.formatted_address);
+        
+        if (!place.geometry) {
+            alert("No details available for this address");
+            return;
+        }
+        
+        // Set coordinates
+        document.getElementById('latitude').value = place.geometry.location.lat();
+        document.getElementById('longitude').value = place.geometry.location.lng();
+        
+        // Parse components
+        const components = {};
+        place.address_components.forEach(c => {
+            components[c.types[0]] = c.long_name;
+        });
+        
+        const streetNumber = components.street_number || '';
+        const route = components.route || '';
+        document.getElementById('street').value = (streetNumber + ' ' + route).trim();
+        document.getElementById('city').value = components.locality || components.administrative_area_level_2 || '';
+        document.getElementById('province').value = components.administrative_area_level_1 || '';
+        document.getElementById('country').value = components.country || '';
+        document.getElementById('zip_code').value = components.postal_code || '';
+        
+        console.log("✅ Address components set");
+        
+        // Auto-submit after Google selection
+        setTimeout(() => {
+            document.getElementById('location-form').submit();
+        }, 500);
+    });
+};
+
+class AISuggestions {
+    constructor() {
+        this.input = document.getElementById('address-input');
+        this.container = document.getElementById('suggestions-container');
+        
+        if (!this.input || !this.container) {
+            console.error("❌ Elements not found!");
+            return;
+        }
+        
+        console.log("✅ Elements found, initializing...");
+        
+        // Simple input handler
+        this.input.addEventListener('input', () => {
+            const query = this.input.value.trim();
+            if (query.length > 0) {
+                this.fetchSuggestions(query);
+            } else {
+                this.container.style.display = 'none';
+            }
+        });
+        
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!this.input.contains(e.target) && !this.container.contains(e.target)) {
+                this.container.style.display = 'none';
+            }
+        });
+    }
+    
+    async fetchSuggestions(query) {
+        try {
+            console.log("🔍 Fetching suggestions for:", query);
+            const response = await fetch(`/api/ai-suggestions/?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            console.log("📦 Received data:", data);
+            
+            if (data.suggestions && data.suggestions.length > 0) {
+                this.displaySuggestions(data.suggestions);
+            } else {
+                this.container.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.container.style.display = 'none';
+        }
+    }
+    
+    displaySuggestions(suggestions) {
+        let html = '';
+        suggestions.forEach(sugg => {
+            html += `
+                <div class="suggestion-item" onclick="window.searchAISuggestion('${sugg.text.replace(/'/g, "\\'")}')">
+                    <div style="font-weight: bold;">${sugg.text}</div>
+                    <small style="color: #666; display: block;">${sugg.secondary_text || ''}</small>
+                    <small style="color: #999; display: block;">Confidence: ${sugg.ai_confidence} (${sugg.ai_score}%)</small>
+                </div>
+            `;
+        });
+        
+        this.container.innerHTML = html;
+        this.container.style.display = 'block';
+    }
+}
+
+// NEW FUNCTION: Search AI suggestion without alert
+window.searchAISuggestion = function(address) {
+    console.log("📍 Searching AI suggestion:", address);
+    
+    // Set the input value
+    const input = document.getElementById('address-input');
+    input.value = address;
+    
+    // Hide suggestions
+    document.getElementById('suggestions-container').style.display = 'none';
+    
+    // Show loading state
+    const submitBtn = document.getElementById('submit-btn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="loading"></span> Searching...';
+    submitBtn.disabled = true;
+    
+    // Use Google Geocoding API directly
+    const geocoder = new google.maps.Geocoder();
+    
+    geocoder.geocode({
+        'address': address,
+        'componentRestrictions': { 'country': 'ph' }
+    }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            const place = results[0];
+            const location = place.geometry.location;
+            
+            // Set coordinates
+            document.getElementById('latitude').value = location.lat();
+            document.getElementById('longitude').value = location.lng();
+            
+            // Parse components
+            const components = {};
+            place.address_components.forEach(c => {
+                components[c.types[0]] = c.long_name;
+            });
+            
+            const streetNumber = components.street_number || '';
+            const route = components.route || '';
+            document.getElementById('street').value = (streetNumber + ' ' + route).trim();
+            document.getElementById('city').value = components.locality || components.administrative_area_level_2 || '';
+            document.getElementById('province').value = components.administrative_area_level_1 || '';
+            document.getElementById('country').value = components.country || '';
+            document.getElementById('zip_code').value = components.postal_code || '';
+            
+            console.log("✅ AI suggestion geocoded successfully");
+            
+            // Submit the form
+            document.getElementById('location-form').submit();
+        } else {
+            console.error("Geocoding failed:", status);
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            alert('Could not find coordinates for this address. Please try a more specific address or use the Google dropdown.');
+        }
+    });
+};
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("📄 DOM loaded");
+    window.aiSuggestions = new AISuggestions();
+    
+    // Check if Google Maps is already loaded
+    if (typeof google !== 'undefined' && google.maps) {
+        window.initAutocomplete();
+    }
+    
+    const form = document.getElementById('location-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const lat = document.getElementById('latitude').value;
+            const address = document.getElementById('address-input').value;
+            
+            console.log("📤 Form submitted - Lat:", lat, "Address:", address);
+            
+            if (!address) {
+                e.preventDefault();
+                alert('Please enter an address');
+                return;
+            }
+            
+            // Remove the latitude check - now AI suggestions will have coordinates
+            // because we geocode them before submission
+            
+            console.log("✅ Form validation passed, submitting...");
+        });
+    }
+});
+</script>
 </body>
 </html>
