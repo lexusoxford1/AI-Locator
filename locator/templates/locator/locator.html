@@ -4,330 +4,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Locator - Professional Address Finder</title>
-    <link rel="stylesheet" href="{% static 'locator/locator.css' %}">
+    <title>AI Locator Pro - Professional Address Validation</title>
+    
+    <!-- Google Maps API -->
     <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&loading=async"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'locator/locator.css' %}">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h2>📍 AI Locator</h2>
-            <p>Find and validate addresses with precision</p>
+            <h2>📍 AI Locator Pro</h2>
+            <p>Intelligent Address Validation & Geocoding Platform</p>
         </div>
         
         <div class="content">
+            <!-- Search Section -->
             <div class="search-section">
                 <form method="post" id="location-form">
                     {% csrf_token %}
-                    <div class="form-group">
+                    <div class="form-row">
                         <div class="search-wrapper">
                             <input 
-                                id="address-input" 
                                 type="text" 
+                                id="address-input" 
                                 name="address" 
-                                placeholder="Enter an address (e.g., 123 Main St, Manila)" 
+                                placeholder="Enter any address (e.g., 123 Rizal Ave, Manila)"
                                 autocomplete="off"
-                                required
+                                value="{{ request.POST.address|default:'' }}"
                             >
                             <div id="suggestions-container" class="suggestions-container"></div>
+                        </div>
                         
-                        <!-- Hidden parsed fields -->
-                        <input type="hidden" name="latitude" id="latitude">
-                        <input type="hidden" name="longitude" id="longitude">
-                        <input type="hidden" name="street" id="street">
-                        <input type="hidden" name="city" id="city">
-                        <input type="hidden" name="province" id="province">
-                        <input type="hidden" name="country" id="country">
-                        <input type="hidden" name="zip_code" id="zip_code">
+                        <!-- Hidden fields for parsed data -->
+                        <input type="hidden" name="latitude" id="latitude" value="{{ result.latitude|default:'' }}">
+                        <input type="hidden" name="longitude" id="longitude" value="{{ result.longitude|default:'' }}">
+                        <input type="hidden" name="street" id="street" value="{{ result.street|default:'' }}">
+                        <input type="hidden" name="city" id="city" value="{{ result.city|default:'' }}">
+                        <input type="hidden" name="province" id="province" value="{{ result.province|default:'' }}">
+                        <input type="hidden" name="country" id="country" value="{{ result.country|default:'' }}">
+                        <input type="hidden" name="zip_code" id="zip_code" value="{{ result.zip_code|default:'' }}">
                         
                         <button type="submit" id="submit-btn">
-                            <span class="btn-text">Locate Address</span>
+                            <span class="btn-text">Validate Address</span>
                         </button>
                     </div>
                 </form>
             </div>
 
+            <!-- Results Section - Two Column Layout -->
             {% if result %}
-            <div class="results-section fade-in">
-                <h3>📍 Parsed Address Details</h3>
-                <div class="address-details">
-                    <ul>
-                        <li>
-                            <strong>Address Line:</strong>
-                            <span>{{ result.address_line }}</span>
-                        </li>
-                        <li>
-                            <strong>Street:</strong>
-                            <span>{{ result.street|default:"Not provided" }}</span>
-                        </li>
-                        <li>
-                            <strong>City:</strong>
-                            <span>{{ result.city|default:"Not provided" }}</span>
-                        </li>
-                        <li>
-                            <strong>Province:</strong>
-                            <span>{{ result.province|default:"Not provided" }}</span>
-                        </li>
-                        <li>
-                            <strong>Country:</strong>
-                            <span>{{ result.country|default:"Not provided" }}</span>
-                        </li>
-                        <li>
-                            <strong>Zip Code:</strong>
-                            <span>{{ result.zip_code|default:"Not provided" }}</span>
-                        </li>
-                        <li>
-                            <strong>Latitude:</strong>
-                            <span>{{ result.latitude|default:"Not provided" }}</span>
-                        </li>
-                        <li>
-                            <strong>Longitude:</strong>
-                            <span>{{ result.longitude|default:"Not provided" }}</span>
-                        </li>
-                    </ul>
+            <div class="results-grid">
+                <!-- Left Column: Address Details -->
+                <div class="details-card">
+                    <div class="details-header">
+                        <h3>
+                            <i class="fas fa-map-pin" style="color: #2563EB;"></i>
+                            Parsed Address Details
+                        </h3>
+                    </div>
+                    <div class="details-content">
+                        <div class="detail-item">
+                            <span class="detail-label">Full Address:</span>
+                            <span class="detail-value">{{ result.address_line|default:"Not provided" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Street:</span>
+                            <span class="detail-value">{{ result.street|default:"Not provided" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">City:</span>
+                            <span class="detail-value">{{ result.city|default:"Not provided" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Province:</span>
+                            <span class="detail-value">{{ result.province|default:"Not provided" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Country:</span>
+                            <span class="detail-value">{{ result.country|default:"Not provided" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Postal Code:</span>
+                            <span class="detail-value">{{ result.zip_code|default:"Not provided" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Coordinates:</span>
+                            <span class="detail-value">
+                                {% if result.latitude and result.longitude %}
+                                    <span class="coordinates-badge">
+                                        <i class="fas fa-location-dot"></i>
+                                        {{ result.latitude|floatformat:6 }}, {{ result.longitude|floatformat:6 }}
+                                    </span>
+                                {% else %}
+                                    Not available
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            {% endif %}
 
-            {% if result.latitude and result.longitude %}
-            <div class="map-section fade-in">
-                <h3>🗺️ Location Map</h3>
-                <div class="map-container">
-                    <iframe
-                        loading="lazy"
-                        allowfullscreen
-                        referrerpolicy="no-referrer-when-downgrade"
-                        src="https://www.google.com/maps/embed/v1/place?key={{ GOOGLE_GEOCODING_API_KEY }}&q={{ result.latitude }},{{ result.longitude }}">
-                    </iframe>
+                <!-- Right Column: Map -->
+                <div class="map-card">
+                    <div class="map-header">
+                        <h3>
+                            <i class="fas fa-map" style="color: #2563EB;"></i>
+                            Location Map
+                        </h3>
+                    </div>
+                    <div class="map-container">
+                        {% if result.latitude and result.longitude %}
+                        <iframe
+                            loading="lazy"
+                            allowfullscreen
+                            referrerpolicy="no-referrer-when-downgrade"
+                            src="https://www.google.com/maps/embed/v1/place?key={{ GOOGLE_GEOCODING_API_KEY }}&q={{ result.latitude }},{{ result.longitude }}&zoom=15">
+                        </iframe>
+                        {% else %}
+                        <div class="map-placeholder">
+                            <div>
+                                <i class="fas fa-map"></i>
+                                <p>Map unavailable - No coordinates</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            {% endif %}
-            
-            {% if not result %}
+            {% else %}
+            <!-- Empty State -->
             <div class="empty-state">
-                <i>🔍</i>
-                <p>Enter an address above to get started</p>
-                <small>Start typing to see suggestions</small>
+                <div class="empty-icon">🔍</div>
+                <p>Enter an address to get started</p>
+                <small>Type an address and click "Validate Address"</small>
             </div>
             {% endif %}
         </div>
     </div>
-    <script src="{% static 'locator/locator.js' %}"></script>
-<script>
-// ===========================================
-// AI SUGGESTIONS - AUTO-SEARCH ON CLICK (NO ALERT)
-// ===========================================
 
-console.log("🚀 Loading AI Suggestions...");
-
-window.initAutocomplete = function() {
-    console.log("🗺️ Google Maps loaded");
-    
-    const input = document.getElementById('address-input');
-    if (!input) {
-        console.error("Input not found");
-        return;
-    }
-    
-    const autocomplete = new google.maps.places.Autocomplete(input, {
-        types: ['address'],
-        componentRestrictions: { country: 'ph' }
-    });
-    
-    autocomplete.setFields(['address_components', 'geometry', 'formatted_address']);
-    
-    autocomplete.addListener('place_changed', function() {
-        const place = autocomplete.getPlace();
-        console.log("📍 Google Place selected:", place.formatted_address);
-        
-        if (!place.geometry) {
-            alert("No details available for this address");
-            return;
-        }
-        
-        // Set coordinates
-        document.getElementById('latitude').value = place.geometry.location.lat();
-        document.getElementById('longitude').value = place.geometry.location.lng();
-        
-        // Parse components
-        const components = {};
-        place.address_components.forEach(c => {
-            components[c.types[0]] = c.long_name;
-        });
-        
-        const streetNumber = components.street_number || '';
-        const route = components.route || '';
-        document.getElementById('street').value = (streetNumber + ' ' + route).trim();
-        document.getElementById('city').value = components.locality || components.administrative_area_level_2 || '';
-        document.getElementById('province').value = components.administrative_area_level_1 || '';
-        document.getElementById('country').value = components.country || '';
-        document.getElementById('zip_code').value = components.postal_code || '';
-        
-        console.log("✅ Address components set");
-        
-        // Auto-submit after Google selection
-        setTimeout(() => {
-            document.getElementById('location-form').submit();
-        }, 500);
-    });
-};
-
-class AISuggestions {
-    constructor() {
-        this.input = document.getElementById('address-input');
-        this.container = document.getElementById('suggestions-container');
-        
-        if (!this.input || !this.container) {
-            console.error("❌ Elements not found!");
-            return;
-        }
-        
-        console.log("✅ Elements found, initializing...");
-        
-        // Simple input handler
-        this.input.addEventListener('input', () => {
-            const query = this.input.value.trim();
-            if (query.length > 0) {
-                this.fetchSuggestions(query);
-            } else {
-                this.container.style.display = 'none';
-            }
-        });
-        
-        // Close on click outside
-        document.addEventListener('click', (e) => {
-            if (!this.input.contains(e.target) && !this.container.contains(e.target)) {
-                this.container.style.display = 'none';
-            }
-        });
-    }
-    
-    async fetchSuggestions(query) {
-        try {
-            console.log("🔍 Fetching suggestions for:", query);
-            const response = await fetch(`/api/ai-suggestions/?q=${encodeURIComponent(query)}`);
-            const data = await response.json();
-            console.log("📦 Received data:", data);
-            
-            if (data.suggestions && data.suggestions.length > 0) {
-                this.displaySuggestions(data.suggestions);
-            } else {
-                this.container.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            this.container.style.display = 'none';
-        }
-    }
-    
-    displaySuggestions(suggestions) {
-        let html = '';
-        suggestions.forEach(sugg => {
-            html += `
-                <div class="suggestion-item" onclick="window.searchAISuggestion('${sugg.text.replace(/'/g, "\\'")}')">
-                    <div style="font-weight: bold;">${sugg.text}</div>
-                    <small style="color: #666; display: block;">${sugg.secondary_text || ''}</small>
-                    <small style="color: #999; display: block;">Confidence: ${sugg.ai_confidence} (${sugg.ai_score}%)</small>
-                </div>
-            `;
-        });
-        
-        this.container.innerHTML = html;
-        this.container.style.display = 'block';
-    }
-}
-
-// NEW FUNCTION: Search AI suggestion without alert
-window.searchAISuggestion = function(address) {
-    console.log("📍 Searching AI suggestion:", address);
-    
-    // Set the input value
-    const input = document.getElementById('address-input');
-    input.value = address;
-    
-    // Hide suggestions
-    document.getElementById('suggestions-container').style.display = 'none';
-    
-    // Show loading state
-    const submitBtn = document.getElementById('submit-btn');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span class="loading"></span> Searching...';
-    submitBtn.disabled = true;
-    
-    // Use Google Geocoding API directly
-    const geocoder = new google.maps.Geocoder();
-    
-    geocoder.geocode({
-        'address': address,
-        'componentRestrictions': { 'country': 'ph' }
-    }, function(results, status) {
-        if (status === 'OK' && results[0]) {
-            const place = results[0];
-            const location = place.geometry.location;
-            
-            // Set coordinates
-            document.getElementById('latitude').value = location.lat();
-            document.getElementById('longitude').value = location.lng();
-            
-            // Parse components
-            const components = {};
-            place.address_components.forEach(c => {
-                components[c.types[0]] = c.long_name;
-            });
-            
-            const streetNumber = components.street_number || '';
-            const route = components.route || '';
-            document.getElementById('street').value = (streetNumber + ' ' + route).trim();
-            document.getElementById('city').value = components.locality || components.administrative_area_level_2 || '';
-            document.getElementById('province').value = components.administrative_area_level_1 || '';
-            document.getElementById('country').value = components.country || '';
-            document.getElementById('zip_code').value = components.postal_code || '';
-            
-            console.log("✅ AI suggestion geocoded successfully");
-            
-            // Submit the form
-            document.getElementById('location-form').submit();
-        } else {
-            console.error("Geocoding failed:", status);
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            alert('Could not find coordinates for this address. Please try a more specific address or use the Google dropdown.');
-        }
-    });
-};
-
-// Initialize on load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("📄 DOM loaded");
-    window.aiSuggestions = new AISuggestions();
-    
-    // Check if Google Maps is already loaded
-    if (typeof google !== 'undefined' && google.maps) {
-        window.initAutocomplete();
-    }
-    
-    const form = document.getElementById('location-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const lat = document.getElementById('latitude').value;
-            const address = document.getElementById('address-input').value;
-            
-            console.log("📤 Form submitted - Lat:", lat, "Address:", address);
-            
-            if (!address) {
-                e.preventDefault();
-                alert('Please enter an address');
-                return;
-            }
-            
-            // Remove the latitude check - now AI suggestions will have coordinates
-            // because we geocode them before submission
-            
-            console.log("✅ Form validation passed, submitting...");
-        });
-    }
-});
-</script>
+    <!-- JavaScript -->
+    <script src="{% static 'locator/js/ai_locator.js' %}"></script>
 </body>
 </html>
