@@ -272,20 +272,58 @@ window.selectSuggestionText = (text) => {
     }
 };
 
-/* ========== FORM SUBMISSION ========== */
+/* ========== ACCURATE GEOCODE ON VALIDATE BUTTON ========== */
 if (form) {
     form.addEventListener('submit', function(e) {
-        const address = input.value.trim();
-        
+        e.preventDefault(); // prevent default submission first
+
+        const inputEl = document.getElementById('address-input');
+        const submitBtnEl = document.getElementById('submit-btn');
+        const address = inputEl.value.trim();
+
         if (!address) {
-            e.preventDefault();
             alert('Please enter an address');
             return;
         }
 
-        setLoadingState(true);
+        setLoadingState(true, 'Validating address...');
+
+        // Use Google Maps Geocoding
+        if (typeof google !== 'undefined') {
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: address, componentRestrictions: { country: 'PH' } }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    const place = results[0];
+                    
+                    document.getElementById('latitude').value = place.geometry.location.lat();
+                    document.getElementById('longitude').value = place.geometry.location.lng();
+
+                    const components = {};
+                    place.address_components.forEach(c => {
+                        components[c.types[0]] = c.long_name;
+                    });
+
+                    document.getElementById('street').value = [components.street_number || '', components.route || ''].filter(Boolean).join(' ').trim();
+                    document.getElementById('city').value = components.locality || components.administrative_area_level_2 || '';
+                    document.getElementById('province').value = components.administrative_area_level_1 || '';
+                    document.getElementById('country').value = components.country || '';
+                    document.getElementById('zip_code').value = components.postal_code || '';
+
+                    setLoadingState(false);
+                    form.submit(); // now submit the form with accurate data
+                } else {
+                    console.warn('Geocode failed:', status);
+                    setLoadingState(false);
+                    alert('Could not validate the address. Please refine your input.');
+                }
+            });
+        } else {
+            setLoadingState(false);
+            alert('Google Maps API is not loaded.');
+        }
     });
 }
+
 
 /* ========== INITIALIZATION ========== */
 document.addEventListener('DOMContentLoaded', function() {
