@@ -7,8 +7,7 @@
     <title>AI Locator Pro - Professional Address Validation</title>
     
     <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&loading=async"></script>
-    
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&loading=async"></script>    
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -24,6 +23,25 @@
         </div>
         
         <div class="content">
+            <!-- ===== NEW: Mode Toggle Section ===== -->
+            <div class="mode-toggle-container">
+                <div class="mode-toggle">
+                    <button type="button" id="mode-google" class="mode-btn active">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Google Maps</span>
+                        <small>Standard geocoding</small>
+                    </button>
+                    <button type="button" id="mode-ai" class="mode-btn">
+                        <i class="fas fa-robot"></i>
+                        <span>AI Intelligence</span>
+                        <small>Smart address completion</small>
+                    </button>
+                </div>
+                <div class="mode-indicator">
+                    <span id="active-mode-badge" class="mode-badge google">🌍 Google Maps Mode Active</span>
+                </div>
+            </div>
+
             <!-- Search Section -->
             <div class="search-section">
                 <form method="post" id="location-form">
@@ -39,6 +57,14 @@
                                 value="{{ request.POST.address|default:'' }}"
                             >
                             <div id="suggestions-container" class="suggestions-container"></div>
+                            
+                            <!-- ===== NEW: AI Confidence Badge ===== -->
+                            <div id="ai-confidence-badge" class="ai-confidence-badge" style="display: none;">
+                                <div class="confidence-meter">
+                                    <div class="confidence-fill" id="confidence-fill" style="width: 0%"></div>
+                                </div>
+                                <span class="confidence-text" id="confidence-text">AI Confidence: 0%</span>
+                            </div>
                         </div>
                         
                         <!-- Hidden fields for parsed data -->
@@ -49,6 +75,10 @@
                         <input type="hidden" name="province" id="province" value="{{ result.province|default:'' }}">
                         <input type="hidden" name="country" id="country" value="{{ result.country|default:'' }}">
                         <input type="hidden" name="zip_code" id="zip_code" value="{{ result.zip_code|default:'' }}">
+                        
+                        <!-- ===== NEW: AI-specific fields ===== -->
+                        <input type="hidden" name="ai_confidence" id="ai_confidence" value="">
+                        <input type="hidden" name="parsing_method" id="parsing_method" value="google">
                         
                         <button type="submit" id="submit-btn">
                             <span class="btn-text">Validate Address</span>
@@ -66,9 +96,32 @@
                         <h3>
                             <i class="fas fa-map-pin" style="color: #2563EB;"></i>
                             Parsed Address Details
+                            <!-- ===== NEW: Method Badge ===== -->
+                            {% if result.parsing_method == 'ai' %}
+                            <span class="method-badge ai">
+                                <i class="fas fa-robot"></i> AI Completed
+                            </span>
+                            {% else %}
+                            <span class="method-badge google">
+                                <i class="fas fa-google"></i> Google Maps
+                            </span>
+                            {% endif %}
                         </h3>
                     </div>
                     <div class="details-content">
+                        <!-- ===== NEW: AI Confidence Section ===== -->
+                        {% if result.parsing_method == 'ai' and result.confidence_score %}
+                        <div class="ai-confidence-section">
+                            <div class="confidence-label">AI Confidence Score</div>
+                            <div class="confidence-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ result.confidence_score }}%"></div>
+                                </div>
+                                <span class="progress-text">{{ result.confidence_score }}%</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <div class="detail-item">
                             <span class="detail-label">Full Address:</span>
                             <span class="detail-value">{{ result.address_line|default:"Not provided" }}</span>
@@ -146,7 +199,7 @@
             {% endif %}
         </div>
     </div>
-
+    
     <!-- JavaScript -->
     <script src="{% static 'locator/js/ai_locator.js' %}"></script>
 </body>
