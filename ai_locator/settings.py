@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
+import sys
 import os
 from dotenv import load_dotenv
 
@@ -122,11 +122,14 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static'] 
 
 GOOGLE_GEOCODING_API_KEY = "AIzaSyASCDZ3QnG8-tCzhqJvewJcEvn9OCAcW9I"
-# Geoapify API Key
-GEOAPIFY_API_KEY = os.getenv('GEOAPIFY_API_KEY')
+# Groq API
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
 
 # Load environment variables
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 dotenv_path = os.path.join(BASE_DIR, '.env')
 load_dotenv(dotenv_path)
+
+if 'runserver' in sys.argv:
+    print(f"🔑 Groq API Key: {'✅ Found' if GROQ_API_KEY else '❌ MISSING'}")

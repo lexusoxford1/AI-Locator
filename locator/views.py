@@ -8,18 +8,15 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 import googlemaps
 import json
-from difflib import SequenceMatcher
 import logging
 
-# Import your AI address completer
-from .address_api import FreeAddressCompleter
+# Import ONLY the Groq address completer
+from .groq_address import GroqAddressCompleter
 
 logger = logging.getLogger(__name__)
 
-# Initialize the address completer
-address_completer = FreeAddressCompleter()
-
-# locator/views.py - updated locator_view function
+# Initialize the address completer (only Groq, no Geoapify)
+address_completer = GroqAddressCompleter()
 
 def locator_view(request):
     result = {}
@@ -30,13 +27,13 @@ def locator_view(request):
             address = request.POST.get("address", "")
             lat = request.POST.get("latitude")
             lng = request.POST.get("longitude")
-            parsing_method = request.POST.get("parsing_method", "google")
+            parsing_method = request.POST.get("parsing_method", "ai")  # Default to AI
 
             print(f"📝 Form submitted - Address: {address}, Method: {parsing_method}")
             print(f"📍 Lat: {lat}, Lng: {lng}")
 
             if lat and lng:
-                # User selected autocomplete
+                # User selected from autocomplete
                 result = {
                     "address_line": address or "Unknown Address",
                     "street": request.POST.get("street", ""),
@@ -50,6 +47,43 @@ def locator_view(request):
                     "confidence_score": request.POST.get("ai_confidence", 0)
                 }
                 print(f"✅ Using autocomplete data: {result}")
+            
+            elif parsing_method == "ai":
+                # Use AI to complete the address
+                print(f"🤖 Using AI for: {address}")
+                ai_result = address_completer.complete_address(address)
+                
+                if ai_result and ai_result.get('results') and len(ai_result['results']) > 0:
+                    best = ai_result['results'][0]
+                    result = {
+                        "address_line": best.get('formatted', address),
+                        "street": best.get('street', ''),
+                        "city": best.get('city', ''),
+                        "province": best.get('state', ''),
+                        "country": "Philippines",
+                        "zip_code": best.get('postcode', ''),
+                        "latitude": best.get('lat'),
+                        "longitude": best.get('lon'),
+                        "parsing_method": "ai",
+                        "confidence_score": best.get('rank', {}).get('confidence', 0) * 100
+                    }
+                    print(f"✅ AI result: {result}")
+                else:
+                    # If AI fails, create a basic result
+                    result = {
+                        "address_line": address,
+                        "street": "",
+                        "city": "",
+                        "province": "",
+                        "country": "Philippines",
+                        "zip_code": "",
+                        "latitude": None,
+                        "longitude": None,
+                        "parsing_method": "ai_failed",
+                        "confidence_score": 0
+                    }
+                    print(f"⚠️ AI failed for: {address}")
+            
             else:
                 # Google geocoding
                 print(f"🔍 Geocoding address: {address}")
@@ -72,12 +106,10 @@ def locator_view(request):
                         result["parsing_method"] = "local"
 
             # Save to DB - with proper error handling
-            if result.get("latitude") and result.get("longitude"):
+            if result and result.get("latitude") and result.get("longitude"):
                 try:
-                    # Ensure address_line is not empty
                     address_line = result.get("address_line") or result.get("street") or "Unknown Location"
                     
-                    # Create the address record
                     address_obj = Address.objects.create(
                         address_line=address_line,
                         street=result.get("street", ""),
@@ -91,8 +123,6 @@ def locator_view(request):
                     print(f"✅ Address saved to database with ID: {address_obj.id}")
                 except Exception as e:
                     print(f"❌ Database error: {e}")
-                    # Don't let database error stop the response
-                    pass
 
         except Exception as e:
             print(f"❌ Error in locator_view POST: {e}")
@@ -104,7 +134,6 @@ def locator_view(request):
         "suggestion": suggestion,
         "GOOGLE_GEOCODING_API_KEY": settings.GOOGLE_GEOCODING_API_KEY
     })
-# locator/views.py - Add this function
 
 @require_GET
 def google_places_autocomplete(request):
@@ -117,13 +146,11 @@ def google_places_autocomplete(request):
         return JsonResponse({'suggestions': []})
     
     try:
-        # Initialize Google Maps client
         gmaps = googlemaps.Client(key=settings.GOOGLE_GEOCODING_API_KEY)
         
-        # Get predictions from Google Places API
         predictions = gmaps.places_autocomplete(
             input_text=query,
-            components={'country': 'ph'},  # Restrict to Philippines
+            components={'country': 'ph'},
             types='address'
         )
         
@@ -143,14 +170,12 @@ def google_places_autocomplete(request):
     except Exception as e:
         print(f"Google Places error: {e}")
         return JsonResponse({'error': str(e), 'suggestions': []}, status=500)
-    
-    # locator/views.py - Add these functions at the end of the file
 
 @csrf_exempt
 @require_POST
 def ai_address_suggestions(request):
     """
-    AI-powered address suggestions endpoint using Geoapify
+    AI-powered address suggestions endpoint using Groq
     """
     try:
         data = json.loads(request.body)
@@ -161,7 +186,7 @@ def ai_address_suggestions(request):
         if not query or len(query) < 2:
             return JsonResponse({'suggestions': []})
         
-        # Get suggestions from Geoapify
+        # Get suggestions from Groq
         suggestions = address_completer.get_suggestions(query)
         print(f"📦 Found {len(suggestions)} suggestions")
         
@@ -178,12 +203,11 @@ def ai_address_suggestions(request):
         traceback.print_exc()
         return JsonResponse({'error': str(e), 'suggestions': []}, status=500)
 
-
 @csrf_exempt
 @require_POST
 def ai_complete_address(request):
     """
-    Complete a single address with full details using AI
+    Complete a single address with full details using Groq
     """
     try:
         data = json.loads(request.body)
@@ -194,7 +218,7 @@ def ai_complete_address(request):
         if not query:
             return JsonResponse({'error': 'No address provided'}, status=400)
         
-        # Complete the address
+        # Complete the address using Groq
         result = address_completer.complete_address(query)
         
         if result:
