@@ -719,3 +719,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setMode('google');
 });
+
+/* ========== GOOGLE AUTOCOMPLETE INITIALIZATION ========== */
+function initGoogleAutocomplete() {
+    if (!input) return console.error('Input not found');
+
+    autocomplete = new google.maps.places.Autocomplete(input, {
+        types: ['address'],
+        componentRestrictions: { country: 'ph' }
+    });
+    utocomplete.setFields(['address_components', 'geometry', 'formatted_address']);
+     autocomplete.addListener('place_changed', function () {
+        const place = autocomplete.getPlace();
+        handleGooglePlaceSelection(place);
+    });
+}
