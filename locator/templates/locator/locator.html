@@ -12,8 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- CSS -->
-    <link rel="stylesheet" href="{% static 'locator/locator4.css' %}">
+    <!-- CSS with cache busting -->
+    <link rel="stylesheet" href="{% static 'locator/locator4.css' %}?v=20240224">
 </head>
 <body>
     <div class="container">
@@ -23,26 +23,39 @@
         </div>
         
         <div class="content">
-            <!-- Mode Toggle Section -->
+            <!-- Mode Toggle Section - Professional Design -->
             <div class="mode-toggle-container">
                 <div class="mode-toggle">
-                    <button type="button" id="mode-ai" class="mode-btn {% if result.parsing_method == 'ai' or not result %}active{% endif %}">
+                    <button 
+                        type="button" 
+                        id="mode-ai" 
+                        class="mode-btn {% if result.parsing_method == 'ai' or not result %}active{% endif %}"
+                    >
                         <i class="fas fa-robot"></i>
-                        <span>AI Intelligence</span>
-                        <small>Smart address completion (Default)</small>
+                        <span>
+                            AI Intelligence
+                            <small>Smart address completion</small>
+                        </span>
                     </button>
-                    <button type="button" id="mode-google" class="mode-btn {% if result.parsing_method == 'google' %}active{% endif %}">
+                    <button 
+                        type="button" 
+                        id="mode-google" 
+                        class="mode-btn {% if result.parsing_method == 'google' %}active{% endif %}"
+                    >
                         <i class="fas fa-map-marked-alt"></i>
-                        <span>Google Maps</span>
-                        <small>Standard geocoding</small>
+                        <span>
+                            Google Maps
+                            <small>Standard geocoding</small>
+                        </span>
                     </button>
                 </div>
                 <div class="mode-indicator">
                     <span id="active-mode-badge" class="mode-badge {% if result.parsing_method == 'google' %}google{% else %}ai{% endif %}">
+                        <i class="{% if result.parsing_method == 'google' %}fas fa-map-marked-alt{% else %}fas fa-robot{% endif %}"></i>
                         {% if result.parsing_method == 'google' %}
-                            🌍 Google Maps Mode
+                            Google Maps Mode Active
                         {% else %}
-                            🤖 AI Mode Active
+                            AI Mode Active
                         {% endif %}
                     </span>
                 </div>
@@ -69,7 +82,13 @@
                                 <div class="confidence-meter">
                                     <div class="confidence-fill" id="confidence-fill" style="width: {{ result.confidence_score|default:0 }}%"></div>
                                 </div>
-                                <span class="confidence-text" id="confidence-text">AI Confidence: {{ result.confidence_score|default:0 }}%</span>
+                                <span class="confidence-text" id="confidence-text">
+                                    {% if result.confidence_score %}
+                                        {{ result.confidence_score }}% Match
+                                    {% else %}
+                                        0% Match
+                                    {% endif %}
+                                </span>
                             </div>
                         </div>
                         
@@ -109,7 +128,7 @@
                             </span>
                             {% else %}
                             <span class="method-badge google">
-                                <i class="fas fa-google"></i> Google Maps
+                                <i class="fas fa-map-marked-alt"></i> Google Maps
                             </span>
                             {% endif %}
                         </h3>
@@ -206,7 +225,7 @@
     </div>
     
     <!-- JavaScript -->
-    <script src="{% static 'locator/js/ai_locator1.js' %}"></script>
-    <script src="{% static 'locator/js/ajax_csrf.js' %}"></script>
+    <script src="{% static 'locator/js/ai_locator1.js' %}?v=20240224"></script>
+    <script src="{% static 'locator/js/ajax_csrf.js' %}?v=20240224"></script>
 </body>
 </html>
