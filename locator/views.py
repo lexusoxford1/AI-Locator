@@ -24,18 +24,21 @@ def locator_view(request):
 
     if request.method == "POST":
         try:
-            address = request.POST.get("address", "")
-            lat = request.POST.get("latitude")
-            lng = request.POST.get("longitude")
+            address = request.POST.get("address", "").strip()
             parsing_method = request.POST.get("parsing_method", "ai")  # Default to AI
 
             print(f"📝 Form submitted - Address: {address}, Method: {parsing_method}")
-            print(f"📍 Lat: {lat}, Lng: {lng}")
 
+            if not address:
+                print("⚠️ No address provided")
+                return render(request, "locator/locator.html", {"result": {}, "suggestion": None})
+
+            # ---  Check if user selected autocomplete (lat/lng present) ---
+            lat = request.POST.get("latitude")
+            lng = request.POST.get("longitude")
             if lat and lng:
-                # User selected from autocomplete
                 result = {
-                    "address_line": address or "Unknown Address",
+                    "address_line": address,
                     "street": request.POST.get("street", ""),
                     "city": request.POST.get("city", ""),
                     "province": request.POST.get("province", ""),
@@ -46,47 +49,50 @@ def locator_view(request):
                     "parsing_method": parsing_method,
                     "confidence_score": request.POST.get("ai_confidence", 0)
                 }
-                print(f"✅ Using autocomplete data: {result}")
-            
+                print(f"✅ Using user-selected autocomplete data: {result}")
+
+            # ===============================
+            # ✅ STRICT AI MODE (NO GOOGLE PARSING)
+            # ===============================
             elif parsing_method == "ai":
-                # Use AI to complete the address
-                print(f"🤖 Using AI for: {address}")
+                print(f"🤖 STRICT AI MODE for: {address}")
+
                 ai_result = address_completer.complete_address(address)
-                
-                if ai_result and ai_result.get('results') and len(ai_result['results']) > 0:
-                    best = ai_result['results'][0]
-                    result = {
-                        "address_line": best.get('formatted', address),
-                        "street": best.get('street', ''),
-                        "city": best.get('city', ''),
-                        "province": best.get('state', ''),
-                        "country": "Philippines",
-                        "zip_code": best.get('postcode', ''),
-                        "latitude": best.get('lat'),
-                        "longitude": best.get('lon'),
-                        "parsing_method": "ai",
-                        "confidence_score": best.get('rank', {}).get('confidence', 0) * 100
-                    }
-                    print(f"✅ AI result: {result}")
-                else:
-                    # If AI fails, create a basic result
-                    result = {
-                        "address_line": address,
-                        "street": "",
-                        "city": "",
-                        "province": "",
-                        "country": "Philippines",
-                        "zip_code": "",
-                        "latitude": None,
-                        "longitude": None,
-                        "parsing_method": "ai_failed",
-                        "confidence_score": 0
-                    }
-                    print(f"⚠️ AI failed for: {address}")
-            
+                formatted_address = ai_result.get("full_address", address)
+
+                # 🔹 OPTIONAL: Only use Google for coordinates (NOT parsing)
+                geo_data = geocode_address(formatted_address, settings.GOOGLE_GEOCODING_API_KEY)
+
+                latitude = None
+                longitude = None
+
+                if geo_data:
+                    latitude = geo_data.get("latitude")
+                    longitude = geo_data.get("longitude")
+                    print("📍 Coordinates added via geocoding only")
+
+                # 🚨 DO NOT extract Google address components
+                result = {
+                    "address_line": formatted_address,
+                    "street": ai_result.get("street", ""),
+                    "city": ai_result.get("city", ""),
+                    "province": ai_result.get("province", ""),
+                    "country": "Philippines",
+                    "zip_code": ai_result.get("zip_code", ""),
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "parsing_method": "ai",
+                    "confidence_score": ai_result.get("confidence", 0)
+                }
+
+                print(f"✅ AI result (no Google parsing applied): {result}")
+
+            # ===============================
+            # ✅ STRICT GOOGLE MODE
+            # ===============================
             else:
-                # Google geocoding
-                print(f"🔍 Geocoding address: {address}")
+                print(f"🔍 STRICT GOOGLE MODE for: {address}")
+
                 geo_data = geocode_address(address, settings.GOOGLE_GEOCODING_API_KEY)
                 if geo_data:
                     result = extract_fields(geo_data["address_components"])
@@ -95,23 +101,20 @@ def locator_view(request):
                     result["longitude"] = geo_data["longitude"]
                     result["parsing_method"] = "google"
                     suggestion = geo_data.get("formatted_address")
-                    print(f"✅ Geocoding successful: {result}")
+                    print(f"✅ Google geocoding successful: {result}")
                 else:
-                    # Fallback to local
-                    print("⚠️ Geocoding failed, trying local fallback")
                     fallback = get_local_address_info(address)
                     if fallback:
                         result.update(fallback)
                         result["address_line"] = address
                         result["parsing_method"] = "local"
+                        print(f"⚠️ Using local fallback: {result}")
 
-            # Save to DB - with proper error handling
-            if result and result.get("latitude") and result.get("longitude"):
+            # --- Save to database only if lat/lng exists ---
+            if result.get("latitude") and result.get("longitude"):
                 try:
-                    address_line = result.get("address_line") or result.get("street") or "Unknown Location"
-                    
                     address_obj = Address.objects.create(
-                        address_line=address_line,
+                        address_line=result.get("address_line") or "Unknown Location",
                         street=result.get("street", ""),
                         city=result.get("city", ""),
                         province=result.get("province", ""),
@@ -120,9 +123,9 @@ def locator_view(request):
                         latitude=result.get("latitude"),
                         longitude=result.get("longitude")
                     )
-                    print(f"✅ Address saved to database with ID: {address_obj.id}")
+                    print(f"✅ Address saved to DB with ID: {address_obj.id}")
                 except Exception as e:
-                    print(f"❌ Database error: {e}")
+                    print(f"❌ DB error: {e}")
 
         except Exception as e:
             print(f"❌ Error in locator_view POST: {e}")
@@ -134,7 +137,6 @@ def locator_view(request):
         "suggestion": suggestion,
         "GOOGLE_GEOCODING_API_KEY": settings.GOOGLE_GEOCODING_API_KEY
     })
-
 @require_GET
 def google_places_autocomplete(request):
     """
