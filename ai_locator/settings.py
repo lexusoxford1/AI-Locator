@@ -125,6 +125,8 @@ GOOGLE_GEOCODING_API_KEY = "AIzaSyASCDZ3QnG8-tCzhqJvewJcEvn9OCAcW9I"
 # Groq API
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+
 
 # Load environment variables
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
