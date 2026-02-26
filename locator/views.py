@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 import googlemaps
 import json
 import logging
+import requests
 
 # Import ONLY the Groq address completer
 from .groq_address import GroqAddressCompleter
@@ -236,6 +237,71 @@ def ai_complete_address(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         print(f"❌ Error in ai_complete_address: {e}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+# Add this to your locator/views.py
+
+@csrf_exempt
+@require_POST
+def groq_location_from_coordinates(request):
+    """
+    Use Groq AI to understand a location from coordinates (for map clicks in AI mode)
+    """
+    try:
+        data = json.loads(request.body)
+        lat = data.get('latitude')
+        lng = data.get('longitude')
+        is_coordinates = data.get('is_coordinates', False)
+        
+        print(f"🗺️ Groq location from coordinates: {lat}, {lng}")
+        
+        if not lat or not lng:
+            return JsonResponse({'error': 'Missing coordinates'}, status=400)
+        
+        # Format as a query for the address completer
+        query = f"{lat}, {lng}"
+        
+        # Get location understanding from Groq
+        result = address_completer.complete_address(query)
+        
+        if result and result.get('results') and len(result['results']) > 0:
+            best = result['results'][0]
+            
+            # Add AI-generated insights
+            # You can enhance this with more context from Groq
+            response_data = {
+                'street': best.get('street', ''),
+                'city': best.get('city', ''),
+                'province': best.get('state', ''),
+                'country': best.get('country', 'Philippines'),
+                'zip_code': best.get('postcode', ''),
+                'full_address': best.get('formatted', f"{lat}, {lng}"),
+                'confidence': best.get('rank', {}).get('confidence', 0.85) * 100,
+                'landmarks': [],  # Can be populated if your Groq completer returns this
+                'description': best.get('description', f"Location at coordinates {lat}, {lng}")
+            }
+            
+            print(f"✅ Groq location result: {response_data}")
+            return JsonResponse(response_data)
+        else:
+            # Return basic coordinate info if Groq fails
+            return JsonResponse({
+                'street': '',
+                'city': '',
+                'province': '',
+                'country': 'Philippines',
+                'zip_code': '',
+                'full_address': f"{lat}, {lng}",
+                'confidence': 50,
+                'landmarks': [],
+                'description': f"Coordinates: {lat}, {lng}"
+            })
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        print(f"❌ Error in groq_location_from_coordinates: {e}")
         import traceback
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)

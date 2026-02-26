@@ -61,7 +61,7 @@
                 </div>
             </div>
 
-            <!-- Search Section -->
+            <!-- Search Section - Clean version without any parsing indicators -->
             <div class="search-section">
                 <form method="post" id="location-form">
                     {% csrf_token %}
@@ -71,25 +71,11 @@
                                 type="text" 
                                 id="address-input" 
                                 name="address" 
-                                placeholder="{% if result.parsing_method == 'google' %}Enter address (e.g., 123 Rizal Ave, Manila){% else %}Type any place - AI completes it (e.g., 'bahay ni rizal'){% endif %}"
+                                placeholder="{% if result.parsing_method == 'google' %}Enter address (e.g., 123 Rizal Ave, Manila){% else %}Type any place (e.g., 'bahay ni rizal'){% endif %}"
                                 autocomplete="off"
                                 value="{{ request.POST.address|default:'' }}"
                             >
                             <div id="suggestions-container" class="suggestions-container"></div>
-                            
-                            <!-- AI Confidence Badge -->
-                            <div id="ai-confidence-badge" class="ai-confidence-badge" style="display: {% if result.parsing_method == 'ai' and result.confidence_score %}flex{% else %}none{% endif %};">
-                                <div class="confidence-meter">
-                                    <div class="confidence-fill" id="confidence-fill" style="width: {{ result.confidence_score|default:0 }}%"></div>
-                                </div>
-                                <span class="confidence-text" id="confidence-text">
-                                    {% if result.confidence_score %}
-                                        {{ result.confidence_score }}% Match
-                                    {% else %}
-                                        0% Match
-                                    {% endif %}
-                                </span>
-                            </div>
                         </div>
                         
                         <!-- Hidden fields for parsed data -->
@@ -122,18 +108,26 @@
                         <h3>
                             <i class="fas fa-map-pin" style="color: #2563EB;"></i>
                             Parsed Address Details
+                        </h3>
+                    </div>
+                    <div class="details-content">
+                        <!-- Parsing Method Badge moved here -->
+                        <div class="parsing-method-section">
                             {% if result.parsing_method == 'ai' %}
                             <span class="method-badge ai">
                                 <i class="fas fa-robot"></i> AI Completed
+                            </span>
+                            {% elif result.parsing_method == 'pinpoint' %}
+                            <span class="method-badge pinpoint">
+                                <i class="fas fa-map-marker-alt"></i> Pinpoint Selected
                             </span>
                             {% else %}
                             <span class="method-badge google">
                                 <i class="fas fa-map-marked-alt"></i> Google Maps
                             </span>
                             {% endif %}
-                        </h3>
-                    </div>
-                    <div class="details-content">
+                        </div>
+
                         {% if result.parsing_method == 'ai' and result.confidence_score %}
                         <div class="ai-confidence-section">
                             <div class="confidence-label">AI Confidence Score</div>
@@ -186,7 +180,7 @@
                     </div>
                 </div>
 
-                <!-- Right Column: Map -->
+                <!-- Right Column: Clickable Map -->
                 <div class="map-card">
                     <div class="map-header">
                         <h3>
@@ -194,22 +188,16 @@
                             Location Map
                         </h3>
                     </div>
-                    <div class="map-container">
-                        {% if result.latitude and result.longitude %}
-                        <iframe
-                            loading="lazy"
-                            allowfullscreen
-                            referrerpolicy="no-referrer-when-downgrade"
-                            src="https://www.google.com/maps/embed/v1/place?key={{ GOOGLE_GEOCODING_API_KEY }}&q={{ result.latitude }},{{ result.longitude }}&zoom=15">
-                        </iframe>
-                        {% else %}
-                        <div class="map-placeholder">
+                    <div class="map-container" id="results-map-container">
+                        <!-- Map placeholder when no coordinates -->
+                        <div class="map-placeholder" id="map-placeholder" {% if result.latitude and result.longitude %}style="display: none;"{% endif %}>
                             <div>
                                 <i class="fas fa-map"></i>
                                 <p>Map unavailable - No coordinates</p>
                             </div>
                         </div>
-                        {% endif %}
+                        <!-- The interactive map container -->
+                        <div id="clickable-map" style="width: 100%; height: 100%; {% if not result.latitude or not result.longitude %}display: none;{% endif %}"></div>
                     </div>
                 </div>
             </div>

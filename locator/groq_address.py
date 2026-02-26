@@ -14,8 +14,7 @@ class GroqAddressCompleter:
     
     def __init__(self):
         self._client = None
-        # Use a working model
-        self.model = "llama-3.1-8b-instant"  # or whatever model worked for you
+        self.model = "llama-3.1-8b-instant"  
         
         print("="*50)
         print("🔧 GROQ ADDRESS COMPLETER INITIALIZED (lazy mode)")
@@ -56,7 +55,6 @@ class GroqAddressCompleter:
                 print("❌ No Groq client available")
                 return None
             
-            # IMPROVED: Prompt for EXACT addresses, not just landmarks
             system_prompt = """You are an AI address assistant for the Philippines. Your task is to convert any query into a COMPLETE, SPECIFIC, EXACT address with house number and street name.
 
 CRITICAL RULES:
