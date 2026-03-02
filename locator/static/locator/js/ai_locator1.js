@@ -365,10 +365,10 @@ class AddressSuggestions {
 
     showExamples() {
         const examples = [
-            { text: '🏠 bahay ni rizal', desc: 'Rizal Shrine, Calamba' },
-            { text: '🏢 sm moa', desc: 'SM Mall of Asia, Pasay' },
-            { text: '📍 bgc', desc: 'Bonifacio Global City, Taguig' },
-            { text: '🏛️ intramuros', desc: 'Intramuros, Manila' }
+            { text: ' bahay ni rizal', desc: 'Rizal Shrine, Calamba' },
+            { text: ' sm moa', desc: 'SM Mall of Asia, Pasay' },
+            { text: ' bgc', desc: 'Bonifacio Global City, Taguig' },
+            { text: ' intramuros', desc: 'Intramuros, Manila' }
         ];
 
         let html = '<div class="suggestions-header">Try these examples:</div>';
