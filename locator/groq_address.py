@@ -7,6 +7,15 @@ import json
 import re
 from .datasets import TOURIST_SPOTS_DATA
 
+# Optional: small dictionary for Philippine ZIP codes for inference
+PH_ZIP_MAP = {
+    "Calamba": "4027",
+    "Manila": "1000",
+    "Cebu City": "6000",
+    "Davao City": "8000",
+    "Quezon City": "1100"
+    # ... extend as needed
+}
 
 class GroqAddressCompleter:
     """
@@ -57,25 +66,17 @@ class GroqAddressCompleter:
             try:
                 system_prompt = """
 You are a HIGHLY ACCURATE Philippine address normalization engine.
-
 STRICT RULES:
-- Return ONLY valid JSON.
-- Do NOT explain anything.
-- No markdown.
-- No extra text.
-- All fields must exist.
-- country must ALWAYS be "Philippines".
-- zip_code must be 4-digit string.
-- confidence must be integer 0-100.
-- address_type must be one of:
-  "street_address", "landmark", "area"
-
-If exact street is unknown, infer best possible.
-If postal code unknown, intelligently infer from city.
-If uncertain, lower confidence.
-
-Required JSON structure:
-
+- Return ONLY valid JSON
+- Do NOT explain, no markdown
+- All fields must exist
+- country must ALWAYS be "Philippines"
+- zip_code must be 4-digit string
+- confidence must be 0-100
+- address_type must be "street_address", "landmark", or "area"
+Infer missing ZIP from city if possible
+Lower confidence if uncertain
+Required JSON:
 {
 "full_address": "...",
 "street": "...",
@@ -89,7 +90,6 @@ Required JSON structure:
 "address_type": "street_address"
 }
 """
-
                 response = client.chat.completions.create(
                     model=self.model,
                     messages=[
@@ -106,7 +106,6 @@ Required JSON structure:
                 json_match = re.search(r"\{.*\}", content, re.DOTALL)
                 if json_match:
                     parsed = json.loads(json_match.group())
-
                     return self._validate_response(parsed)
 
             except Exception:
@@ -137,24 +136,28 @@ Required JSON structure:
             if key not in data:
                 data[key] = None
 
-        # Force country
         data["country"] = "Philippines"
 
-        # Validate ZIP
-        if not isinstance(data["zip_code"], str) or not re.match(r"^\d{4}$", str(data["zip_code"])):
-            data["zip_code"] = "0000"
+        # Infer ZIP if missing
+        if not data.get("zip_code") or not re.match(r"^\d{4}$", str(data["zip_code"])):
+            city = data.get("city")
+            data["zip_code"] = PH_ZIP_MAP.get(city, "0000")
 
-        # Confidence range
+        # Confidence
         try:
             data["confidence"] = int(data["confidence"])
         except:
             data["confidence"] = 50
-
         data["confidence"] = max(0, min(100, data["confidence"]))
 
         # Address type validation
         if data["address_type"] not in ["street_address", "landmark", "area"]:
             data["address_type"] = "street_address"
+
+        # Ensure strings are not None
+        for field in ["full_address", "street", "city", "province", "zip_code"]:
+            if data[field] is None:
+                data[field] = ""
 
         return data
 
@@ -164,22 +167,21 @@ Required JSON structure:
 
     def _fallback_from_dataset(self, query: str):
         query_lower = query.lower()
-
         for spot in TOURIST_SPOTS_DATA:
             if any(keyword.lower() in query_lower for keyword in spot.get("keywords", [])):
+                city = spot.get("city")
                 return {
                     "full_address": spot.get("text"),
                     "street": spot.get("street"),
-                    "city": spot.get("city"),
+                    "city": city,
                     "province": spot.get("province"),
                     "country": "Philippines",
-                    "zip_code": spot.get("zip_code", "0000"),
+                    "zip_code": PH_ZIP_MAP.get(city, spot.get("zip_code", "0000")),
                     "latitude": spot.get("lat"),
                     "longitude": spot.get("lng"),
                     "confidence": spot.get("confidence", 80),
                     "address_type": "landmark",
                 }
-
         return self._generic_fallback(query)
 
     # =============================
