@@ -1,6 +1,3 @@
-/* ============================================
-   AI LOCATOR PRO - GOOGLE ADDRESS AUTOCOMPLETE + AI + CLICKABLE MAP
-   ============================================ */
 
 'use strict';
 
@@ -350,7 +347,6 @@ class AddressSuggestions {
 
         suggestions.forEach((sugg, index) => {
             const isSelected = index === selectedIndex ? 'selected' : '';
-            const confidenceClass = sugg.confidence > 80 ? 'high' : sugg.confidence > 50 ? 'medium' : 'low';
             const regex = new RegExp(`(${query})`, 'gi');
             const highlighted = sugg.text.replace(regex, '<strong style="color: #2563EB;">$1</strong>');
 
@@ -358,7 +354,6 @@ class AddressSuggestions {
                 <div class="suggestion-item ${isSelected}" onclick="window.selectSuggestion(${index})">
                     <div class="suggestion-main"><i class="fas fa-map-pin" style="color: #64748B; margin-right: 8px;"></i>${highlighted}</div>
                     <div class="suggestion-secondary">${sugg.city ? sugg.city : ''}${sugg.province ? ', ' + sugg.province : ''}</div>
-                    <div class="suggestion-confidence ${confidenceClass}"><span class="confidence-dot"></span>${Math.round(sugg.confidence)}% match</div>
                 </div>
             `;
         });

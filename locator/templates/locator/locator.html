@@ -86,7 +86,6 @@
                         <input type="hidden" name="province" id="province" value="{{ result.province|default:'' }}">
                         <input type="hidden" name="country" id="country" value="{{ result.country|default:'Philippines' }}">
                         <input type="hidden" name="zip_code" id="zip_code" value="{{ result.zip_code|default:'' }}">
-                        <input type="hidden" name="ai_confidence" id="ai_confidence" value="{{ result.confidence_score|default:'' }}">
                         <input type="hidden" name="parsing_method" id="parsing_method" value="{% if result.parsing_method %}{{ result.parsing_method }}{% else %}ai{% endif %}">
                         
                         <!-- Store current mode for JavaScript -->
@@ -127,18 +126,6 @@
                             </span>
                             {% endif %}
                         </div>
-
-                        {% if result.parsing_method == 'ai' and result.confidence_score %}
-                        <div class="ai-confidence-section">
-                            <div class="confidence-label">AI Confidence Score</div>
-                            <div class="confidence-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: {{ result.confidence_score }}%"></div>
-                                </div>
-                                <span class="progress-text">{{ result.confidence_score }}%</span>
-                            </div>
-                        </div>
-                        {% endif %}
 
                         <div class="detail-item">
                             <span class="detail-label">Full Address:</span>

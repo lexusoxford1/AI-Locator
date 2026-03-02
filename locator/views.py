@@ -52,42 +52,7 @@ def locator_view(request):
                 }
                 print(f"✅ Using user-selected autocomplete data: {result}")
 
-            # ===============================
-            # ✅ STRICT AI MODE (NO GOOGLE PARSING)
-            # ===============================
-            elif parsing_method == "ai":
-                print(f"🤖 STRICT AI MODE for: {address}")
-
-                ai_result = address_completer.complete_address(address)
-                formatted_address = ai_result.get("full_address", address)
-
-                # 🔹 OPTIONAL: Only use Google for coordinates (NOT parsing)
-                geo_data = geocode_address(formatted_address, settings.GOOGLE_GEOCODING_API_KEY)
-
-                latitude = None
-                longitude = None
-
-                if geo_data:
-                    latitude = geo_data.get("latitude")
-                    longitude = geo_data.get("longitude")
-                    print("📍 Coordinates added via geocoding only")
-
-                # 🚨 DO NOT extract Google address components
-                result = {
-                    "address_line": formatted_address,
-                    "street": ai_result.get("street", ""),
-                    "city": ai_result.get("city", ""),
-                    "province": ai_result.get("province", ""),
-                    "country": "Philippines",
-                    "zip_code": ai_result.get("zip_code", ""),
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "parsing_method": "ai",
-                    "confidence_score": ai_result.get("confidence", 0)
-                }
-
-                print(f"✅ AI result (no Google parsing applied): {result}")
-
+           
             # ===============================
             # ✅ STRICT GOOGLE MODE
             # ===============================
@@ -138,6 +103,7 @@ def locator_view(request):
         "suggestion": suggestion,
         "GOOGLE_GEOCODING_API_KEY": settings.GOOGLE_GEOCODING_API_KEY
     })
+
 @require_GET
 def google_places_autocomplete(request):
     """

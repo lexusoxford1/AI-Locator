@@ -1,4 +1,3 @@
-# Full fallback dataset for tourist spots + malls
 TOURIST_SPOTS_DATA = [
     # Tourist spots
     {"keywords":["bahay ni rizal in calamba","calamba rizal"],
@@ -7,7 +6,7 @@ TOURIST_SPOTS_DATA = [
     
     {"keywords":["rizal park","luneta"],
      "text":"Rizal Park, Ermita, Manila, Metro Manila, Philippines",
-     "street":"Rizal Park","city":"Manila","province":"Metro Manila","lat":14.5820,"lng":120.9783},
+     "street":"Rizal Park","city":"Magtnila","province":"Metro Manila","lat":14.5820,"lng":120.9783},
     
     {"keywords":["intramuros","walled city manila"],
      "text":"General Luna Street, Intramuros, Manila, Metro Manila, Philippines",
