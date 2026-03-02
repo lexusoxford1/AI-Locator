@@ -31,10 +31,6 @@ class GroqAddressCompleter:
         self._client = None
         self.model = "llama-3.1-8b-instant"
 
-    # =============================
-    # CLIENT INITIALIZATION
-    # =============================
-
     def _get_client(self):
         if self._client is None:
             api_key = getattr(settings, "GROQ_API_KEY", None) or os.environ.get("GROQ_API_KEY")
@@ -42,11 +38,6 @@ class GroqAddressCompleter:
                 return None
             self._client = Groq(api_key=api_key)
         return self._client
-
-    # =============================
-    # PUBLIC METHOD
-    # =============================
-
     def complete_address(self, query: str):
         client = self._get_client()
 
@@ -115,10 +106,6 @@ Required JSON structure:
         # Fallback if AI fails
         return self._fallback_from_dataset(query)
 
-    # =============================
-    # VALIDATION LAYER
-    # =============================
-
     def _validate_response(self, data: dict):
         required_keys = [
             "full_address",
@@ -157,10 +144,6 @@ Required JSON structure:
             data["address_type"] = "street_address"
 
         return data
-
-    # =============================
-    # DATASET FALLBACK
-    # =============================
 
     def _fallback_from_dataset(self, query: str):
         query_lower = query.lower()

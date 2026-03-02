@@ -113,7 +113,7 @@ body {
 }
 
 /* ============================================
-   PROFESSIONAL MODE TOGGLE DESIGN - SIMPLIFIED & GUARANTEED TO WORK
+   PROFESSIONAL MODE TOGGLE DESIGN
    ============================================ */
 
 .mode-toggle-container {
@@ -313,58 +313,6 @@ body {
     to { transform: rotate(360deg); }
 }
 
-/* AI Confidence Badge */
-.ai-confidence-badge {
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: white;
-    padding: 6px 16px 6px 12px;
-    border-radius: 40px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border);
-    z-index: 10;
-    animation: slideIn 0.3s ease;
-    pointer-events: none;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translate(20px, -50%);
-    }
-    to {
-        opacity: 1;
-        transform: translate(0, -50%);
-    }
-}
-
-.confidence-meter {
-    width: 60px;
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.confidence-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #10B981, #34D399);
-    border-radius: 3px;
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.confidence-text {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #10B981;
-}
-
 /* Suggestions Dropdown */
 .suggestions-container {
     position: absolute;
@@ -534,19 +482,28 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+}
+
+.details-content {
+    padding: 24px;
+}
+
+/* Parsing Method Section - New styles */
+.parsing-method-section {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
 }
 
 /* Method Badge in Results */
 .method-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
+    gap: 8px;
+    padding: 8px 16px;
     border-radius: 30px;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 500;
-    margin-left: 12px;
 }
 
 .method-badge.ai {
@@ -561,8 +518,14 @@ body {
     border: 1px solid #60A5FA;
 }
 
-.details-content {
-    padding: 24px;
+.method-badge.pinpoint {
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+    color: #B45309;
+    border: 1px solid #F59E0B;
+}
+
+.method-badge i {
+    font-size: 1rem;
 }
 
 /* AI Confidence Section in Results */
@@ -826,14 +789,6 @@ body {
         height: 55px;
     }
     
-    .ai-confidence-badge {
-        position: static;
-        transform: none;
-        margin-top: 12px;
-        justify-content: center;
-        width: 100%;
-    }
-    
     #submit-btn {
         width: 100%;
         height: 55px;
@@ -847,11 +802,6 @@ body {
     .details-header h3 {
         flex-direction: column;
         align-items: flex-start;
-    }
-    
-    .method-badge {
-        margin-left: 0;
-        margin-top: 8px;
     }
     
     .detail-item {
@@ -898,5 +848,151 @@ body {
     
     .map-container {
         height: 300px;
+    }
+}
+
+/* ============================================
+   AI INSIGHTS SECTION - For Groq AI Clickable Pin
+   ============================================ */
+
+.ai-insights-section {
+    background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border: 1px solid #c084fc;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.insights-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: #6b21a5;
+    margin-bottom: 14px;
+    font-size: 1rem;
+    letter-spacing: 0.3px;
+}
+
+.insights-header i {
+    color: #8b5cf6;
+    font-size: 1.2rem;
+    background: rgba(139, 92, 246, 0.15);
+    padding: 6px;
+    border-radius: 50%;
+}
+
+.insight-item {
+    display: flex;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    padding: 4px 0;
+    border-bottom: 1px dashed rgba(139, 92, 246, 0.2);
+}
+
+.insight-item:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.insight-label {
+    font-weight: 600;
+    color: #6b21a5;
+    min-width: 90px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.insight-item:last-child .insight-label {
+    min-width: 90px;
+}
+
+/* Enhanced method badge for AI Understood */
+.method-badge.ai {
+    background: linear-gradient(135deg, #8B5CF6, #6366F1);
+    color: white;
+    border: 1px solid #8B5CF6;
+    box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+    padding: 8px 18px;
+    font-size: 0.95rem;
+}
+
+.method-badge.ai i {
+    color: white;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+}
+
+.method-badge.pinpoint {
+    background: linear-gradient(135deg, #F59E0B, #FBBF24);
+    color: #78350F;
+    border: 1px solid #F59E0B;
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+    padding: 8px 18px;
+    font-size: 0.95rem;
+}
+
+.method-badge.pinpoint i {
+    color: #78350F;
+}
+
+/* Loading state for AI mode */
+#submit-btn .btn-spinner + span {
+    margin-left: 8px;
+}
+
+#submit-btn:disabled {
+    background: linear-gradient(135deg, #9CA3AF, #6B7280);
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .ai-insights-section {
+        padding: 14px 16px;
+    }
+    
+    .insight-item {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .insight-label {
+        min-width: auto;
+        font-size: 0.85rem;
+    }
+    
+    .method-badge.ai,
+    .method-badge.pinpoint {
+        padding: 6px 14px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-insights-section {
+        padding: 12px;
+    }
+    
+    .insights-header {
+        font-size: 0.9rem;
+    }
+    
+    .insight-item {
+        font-size: 0.85rem;
     }
 }
