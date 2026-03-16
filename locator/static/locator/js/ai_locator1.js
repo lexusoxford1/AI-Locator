@@ -1,7 +1,6 @@
 
 'use strict';
 
-// DOM Elements
 const form = document.getElementById('location-form');
 const input = document.getElementById('address-input');
 const submitBtn = document.getElementById('submit-btn');
@@ -17,7 +16,6 @@ let selectedIndex = -1;
 let searchTimeout = null;
 let autocomplete = null;
 
-// ===================== CLICKABLE RESULTS MAP =====================
 let resultsMap = null;
 let resultsMarker = null;
 let geocoder = null;
@@ -25,20 +23,17 @@ let geocoder = null;
 function initClickableResultsMap() {
     console.log('Initializing clickable results map...');
     
-    // Check if Google Maps is loaded
     if (typeof google === 'undefined' || !google.maps) {
         console.log('Google Maps not loaded yet');
         return;
     }
     
-    // Check if we have coordinates
     const lat = parseFloat(document.getElementById('latitude').value);
     const lng = parseFloat(document.getElementById('longitude').value);
     
     if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
         console.log('No valid coordinates available for map');
         
-        // Hide map container and show placeholder
         const mapContainer = document.getElementById('clickable-map');
         const mapPlaceholder = document.getElementById('map-placeholder');
         
@@ -48,7 +43,6 @@ function initClickableResultsMap() {
         return;
     }
     
-    // Get the map container
     const mapContainer = document.getElementById('clickable-map');
     if (!mapContainer) {
         console.log('Map container #clickable-map not found');
@@ -57,22 +51,15 @@ function initClickableResultsMap() {
     
     console.log('Map container found, creating map with coordinates:', lat, lng);
     
-    // Hide placeholder
     const mapPlaceholder = document.getElementById('map-placeholder');
     if (mapPlaceholder) {
         mapPlaceholder.style.display = 'none';
     }
     
-    // Show map container
     mapContainer.style.display = 'block';
-    
-    // Clear the container
-    mapContainer.innerHTML = '';
-    
-    // Initialize geocoder
+    mapContainer.innerHTML = ''; 
     geocoder = new google.maps.Geocoder();
     
-    // Create the map
     const position = { lat, lng };
     resultsMap = new google.maps.Map(mapContainer, {
         center: position,
@@ -84,7 +71,6 @@ function initClickableResultsMap() {
         zoomControl: true,
     });
     
-    // Add a marker
     resultsMarker = new google.maps.Marker({
         position: position,
         map: resultsMap,
@@ -101,13 +87,11 @@ function initClickableResultsMap() {
         }
     });
     
-    // Make the map clickable
     resultsMap.addListener('click', function(e) {
         console.log('Map clicked at:', e.latLng.lat(), e.latLng.lng());
         updateLocationFromClick(e.latLng);
     });
     
-    // Handle marker drag
     resultsMarker.addListener('dragend', function(e) {
         console.log('Marker dragged to:', e.latLng.lat(), e.latLng.lng());
         updateLocationFromClick(e.latLng);
@@ -117,64 +101,46 @@ function initClickableResultsMap() {
 }
 
 function updateLocationFromClick(latLng) {
-    // Update marker position
     if (resultsMarker) {
         resultsMarker.setPosition(latLng);
     }
     
-    // Update coordinates display
     document.getElementById('latitude').value = latLng.lat();
     document.getElementById('longitude').value = latLng.lng();
     
-    // Show loading on button
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<span class="btn-spinner"></span>Getting address...';
     submitBtn.disabled = true;
     
-    // Reverse geocode
     geocoder.geocode({ location: latLng }, function(results, status) {
         if (status === 'OK' && results && results[0]) {
             console.log('Address found:', results[0].formatted_address);
             
-            // Fill the form with the new address
             fillGoogleFields(results[0]);
-            
-            // Update input field
             document.getElementById('address-input').value = results[0].formatted_address;
-            
-            // Set parsing method
             document.getElementById('parsing_method').value = 'pinpoint';
-            
-            // Update the visible address details in the results section
             updateAddressDetailsDisplay(results[0]);
             
-            // Show success message
             showNotification('Location updated successfully!', 'success');
         } else {
             console.error('Geocoding failed:', status);
             
-            // Even if geocoding fails, we keep the coordinates
             showNotification('Address not found, but coordinates saved', 'warning');
         }
-        
-        // Restore button
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
     });
 }
 
-// Function to update the visible address details
 function updateAddressDetailsDisplay(place) {
     console.log('Updating address details display');
     
-    // Check if we're on a results page
     const detailsCard = document.querySelector('.details-card');
     if (!detailsCard) {
         console.log('No details card found - not on results page');
         return;
     }
     
-    // Extract components
     const components = {};
     if (place.address_components) {
         place.address_components.forEach(c => {
@@ -182,18 +148,14 @@ function updateAddressDetailsDisplay(place) {
         });
     }
     
-    // Format full address
     const street = [components.street_number, components.route].filter(Boolean).join(' ');
     const city = components.locality || components.administrative_area_level_2 || '';
     const province = components.administrative_area_level_1 || '';
     const country = components.country || 'Philippines';
     const zip = components.postal_code || '';
-    
-    // Build full address line
     const addressParts = [street, city, province, country, zip].filter(Boolean);
     const fullAddress = addressParts.join(', ');
     
-    // Update all detail items
     updateDetailItem('Full Address:', fullAddress || place.formatted_address);
     updateDetailItem('Street:', street || 'Not provided');
     updateDetailItem('City:', city || 'Not provided');
@@ -201,7 +163,6 @@ function updateAddressDetailsDisplay(place) {
     updateDetailItem('Country:', country || 'Not provided');
     updateDetailItem('Postal Code:', zip || 'Not provided');
     
-    // Update coordinates
     const coordsSpan = document.querySelector('.coordinates-badge');
     if (coordsSpan) {
         const lat = document.getElementById('latitude').value;
@@ -209,7 +170,6 @@ function updateAddressDetailsDisplay(place) {
         coordsSpan.innerHTML = `<i class="fas fa-location-dot"></i> ${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)}`;
     }
     
-    // Update method badge
     const methodBadge = document.querySelector('.method-badge');
     if (methodBadge) {
         methodBadge.className = 'method-badge pinpoint';
@@ -217,7 +177,6 @@ function updateAddressDetailsDisplay(place) {
     }
 }
 
-// Helper function to update a specific detail item
 function updateDetailItem(label, value) {
     const detailItems = document.querySelectorAll('.detail-item');
     detailItems.forEach(item => {
@@ -231,7 +190,6 @@ function updateDetailItem(label, value) {
     });
 }
 
-// ===================== FREE AI ADDRESS COMPLETION =====================
 class FreeAIAddressCompleter {
     constructor() { 
         this.cache = new Map(); 
@@ -294,7 +252,6 @@ class FreeAIAddressCompleter {
     }
 }
 
-// ===================== ADDRESS SUGGESTIONS =====================
 class AddressSuggestions {
     constructor() { 
         this.aiCompleter = new FreeAIAddressCompleter(); 
@@ -406,8 +363,6 @@ class AddressSuggestions {
         if (suggestion.lat && suggestion.lng) { 
             document.getElementById('latitude').value = suggestion.lat; 
             document.getElementById('longitude').value = suggestion.lng; 
-            
-            // Update the map if it exists
             if (resultsMap) {
                 const newPos = { lat: suggestion.lat, lng: suggestion.lng };
                 resultsMap.setCenter(newPos);
@@ -415,7 +370,6 @@ class AddressSuggestions {
                     resultsMarker.setPosition(newPos);
                 }
             } else {
-                // Try to initialize the map if it doesn't exist
                 setTimeout(() => {
                     initClickableResultsMap();
                 }, 500);
@@ -467,7 +421,6 @@ class AddressSuggestions {
     }
 }
 
-// ===================== GOOGLE MAPS AUTOCOMPLETE =====================
 let googleMapsLoaded = false;
 let googleMapsLoading = false;
 
@@ -478,37 +431,26 @@ function initGoogleAutocomplete() {
     }
     
     if (!input) { console.error('Input not found'); return; }
-    
     console.log('Initializing Google Place Autocomplete');
-    
-    // Use the new PlaceAutocompleteElement
     google.maps.importLibrary("places").then(({ PlaceAutocompleteElement }) => {
-        // Create autocomplete element
         const autocompleteElement = new PlaceAutocompleteElement({
             inputElement: input,
             componentRestrictions: { country: 'ph' }
         });
         
-        // Listen for place selection
         autocompleteElement.addEventListener('gmp-select', async ({ place }) => {
             if (!place) return;
-            
-            // Get place details
             await place.fetchFields({
                 fields: ['displayName', 'formattedAddress', 'location', 'addressComponents', 'plusCode']
             });
-            
-            // Fill form fields
             fillGoogleFieldsFromPlace(place);
         });
     }).catch(error => {
         console.error('Error loading Places library:', error);
-        // Fallback to old method if needed
         fallbackInitGoogleAutocomplete();
     });
 }
 
-// Fallback to old method
 function fallbackInitGoogleAutocomplete() {
     if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
     
@@ -529,16 +471,11 @@ function fallbackInitGoogleAutocomplete() {
     });
 }
 
-// Handle Place object
 function fillGoogleFieldsFromPlace(place) {
     console.log('Filling fields from Place:', place.displayName);
-    
     document.getElementById('latitude').value = place.location.lat();
     document.getElementById('longitude').value = place.location.lng();
-    
-    // Extract address components
     let streetNumber = '', route = '', locality = '', areaLevel1 = '', country = '', postalCode = '';
-    
     if (place.addressComponents) {
         place.addressComponents.forEach(component => {
             const types = component.types;
@@ -562,8 +499,6 @@ function fillGoogleFieldsFromPlace(place) {
     }
     
     if (place.formattedAddress) input.value = place.formattedAddress;
-    
-    // Update map if it exists
     if (resultsMap && place.location) {
         const newPos = { lat: place.location.lat(), lng: place.location.lng() };
         resultsMap.setCenter(newPos);
@@ -571,7 +506,6 @@ function fillGoogleFieldsFromPlace(place) {
             resultsMarker.setPosition(newPos);
         }
     } else {
-        // Try to initialize the map
         setTimeout(() => {
             initClickableResultsMap();
         }, 500);
@@ -596,14 +530,11 @@ function fillGoogleFields(place) {
     document.getElementById('country').value = components.country || 'Philippines';
     document.getElementById('zip_code').value = components.postal_code || '';
     
-    // Set parsing method
     if (parsingMethod.value !== 'pinpoint') {
         document.getElementById('parsing_method').value = 'google';
     }
     
     if (place.formatted_address) input.value = place.formatted_address;
-    
-    // Update map if it exists
     if (resultsMap && place.geometry && place.geometry.location) {
         const newPos = { 
             lat: place.geometry.location.lat(), 
@@ -614,14 +545,12 @@ function fillGoogleFields(place) {
             resultsMarker.setPosition(newPos);
         }
     } else {
-        // Try to initialize the map
         setTimeout(() => {
             initClickableResultsMap();
         }, 500);
     }
 }
 
-// ===================== MODE TOGGLE =====================
 function initModeToggle() {
     if (!modeGoogle || !modeAI) return;
     modeGoogle.addEventListener('click', () => setMode('google'));
@@ -632,25 +561,18 @@ function setMode(mode) {
     currentMode = mode;
     modeGoogle.classList.toggle('active', mode === 'google');
     modeAI.classList.toggle('active', mode === 'ai');
-    
-    // Update badge
     activeModeBadge.className = `mode-badge ${mode}`;
     activeModeBadge.innerHTML = mode === 'google' ? 
         '<i class="fas fa-map-marked-alt"></i> Google Maps Mode Active' : 
         '<i class="fas fa-robot"></i> AI Mode Active';
-    
-    // Update placeholder
     input.placeholder = mode === 'google' ? 
         'Enter address (e.g., 123 Rizal Ave, Manila)' : 
         'Type any place (e.g., "bahay ni rizal")';
-    
-    // Clear input and hide suggestions
     input.value = ''; 
     suggestionsContainer.style.display = 'none'; 
     parsingMethod.value = mode;
 }
 
-// ===================== FORM SUBMISSION =====================
 if (form) {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -722,9 +644,7 @@ function setLoadingState(isLoading, text = 'Validating...') {
     }
 }
 
-// Notification function
 function showNotification(message, type = 'success') {
-    // Remove existing notification
     const existingNotification = document.querySelector('.notification');
     if (existingNotification) {
         existingNotification.remove();
@@ -732,28 +652,22 @@ function showNotification(message, type = 'success') {
 
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    
     let icon = 'check-circle';
     if (type === 'warning') icon = 'exclamation-triangle';
     if (type === 'error') icon = 'exclamation-circle';
-    
     notification.innerHTML = `
         <i class="fas fa-${icon}"></i>
         ${message}
     `;
-    
     document.body.appendChild(notification);
-    
     setTimeout(() => {
         notification.classList.add('fade-out');
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
-// Add notification styles
 function addNotificationStyles() {
     if (document.getElementById('notification-styles')) return;
-    
     const styles = `
         .notification {
             position: fixed;
@@ -803,14 +717,12 @@ function addNotificationStyles() {
             }
         }
     `;
-    
     const styleSheet = document.createElement('style');
     styleSheet.id = 'notification-styles';
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);
 }
 
-// ===================== GLOBAL FUNCTIONS =====================
 window.selectSuggestion = (index) => { 
     if(window.suggestions) window.suggestions.selectSuggestion(index); 
 };
@@ -821,15 +733,11 @@ window.setInputValue = (value) => {
     input.dispatchEvent(new Event('input')); 
 };
 
-// ===================== INITIALIZATION =====================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing...');
-    
     addNotificationStyles();
     initModeToggle();
     window.suggestions = new AddressSuggestions();
-    
-    // Get initial mode from hidden field
     const storedMode = document.getElementById('current-mode-storage');
     if (storedMode && storedMode.value) {
         setMode(storedMode.value);
@@ -837,16 +745,12 @@ document.addEventListener('DOMContentLoaded', function() {
         setMode('ai');
     }
     
-    // Initialize Google Maps features
     if (typeof google !== 'undefined' && google.maps) {
         console.log('Google Maps already loaded');
         initGoogleAutocomplete();
-        
-        // Initialize the map immediately
         initClickableResultsMap();
     } else {
         console.log('Waiting for Google Maps to load...');
-        // Check every second for Google Maps
         const checkGoogleMaps = setInterval(function() {
             if (typeof google !== 'undefined' && google.maps) {
                 console.log('Google Maps now loaded');
@@ -858,7 +762,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Also try to initialize when results are loaded
 window.addEventListener('load', function() {
     console.log('Window loaded');
     if (typeof google !== 'undefined' && google.maps) {
@@ -866,7 +769,6 @@ window.addEventListener('load', function() {
     }
 });
 
-// Re-initialize map when results are updated via AJAX
 document.addEventListener('results-updated', function() {
     console.log('Results updated, reinitializing map');
     if (typeof google !== 'undefined' && google.maps) {

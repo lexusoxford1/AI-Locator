@@ -1,4 +1,3 @@
-# locator/utils.py
 import requests
 
 def geocode_address(address, api_key):
@@ -37,7 +36,6 @@ def extract_fields(components):
     data["address_line"] = ", ".join([data[k] for k in ["street","city","province","country"] if data[k]])
     return data
 
-# Optional fallback function for local dataset (simplified)
 LOCAL_ADDRESSES = [
     {"address_line": "Brgy Caingin, Santa Rosa, Laguna, Philippines", 
      "street": "Brgy Caingin", "city": "Santa Rosa", "province": "Laguna", "country": "Philippines", "zip_code": "4026"}

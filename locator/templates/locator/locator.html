@@ -6,13 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Locator Pro - Professional Address Validation</title>
     
-    <!-- Google Maps API -->
     <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_GEOCODING_API_KEY }}&libraries=places&loading=async"></script>    
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- CSS with cache busting -->
     <link rel="stylesheet" href="{% static 'locator/locator4.css' %}?v=20240224">
 </head>
 <body>
@@ -23,7 +20,6 @@
         </div>
         
         <div class="content">
-            <!-- Mode Toggle Section - Professional Design -->
             <div class="mode-toggle-container">
                 <div class="mode-toggle">
                     <button 
@@ -61,7 +57,6 @@
                 </div>
             </div>
 
-            <!-- Search Section - Clean version without any parsing indicators -->
             <div class="search-section">
                 <form method="post" id="location-form">
                     {% csrf_token %}
@@ -78,7 +73,6 @@
                             <div id="suggestions-container" class="suggestions-container"></div>
                         </div>
                         
-                        <!-- Hidden fields for parsed data -->
                         <input type="hidden" name="latitude" id="latitude" value="{{ result.latitude|default:'' }}">
                         <input type="hidden" name="longitude" id="longitude" value="{{ result.longitude|default:'' }}">
                         <input type="hidden" name="street" id="street" value="{{ result.street|default:'' }}">
@@ -88,7 +82,6 @@
                         <input type="hidden" name="zip_code" id="zip_code" value="{{ result.zip_code|default:'' }}">
                         <input type="hidden" name="parsing_method" id="parsing_method" value="{% if result.parsing_method %}{{ result.parsing_method }}{% else %}ai{% endif %}">
                         
-                        <!-- Store current mode for JavaScript -->
                         <input type="hidden" id="current-mode-storage" value="{% if result.parsing_method %}{{ result.parsing_method }}{% else %}ai{% endif %}">
                         
                         <button type="submit" id="submit-btn">
@@ -98,10 +91,8 @@
                 </form>
             </div>
 
-            <!-- Results Section - Two Column Layout -->
             {% if result %}
             <div class="results-grid">
-                <!-- Left Column: Address Details -->
                 <div class="details-card">
                     <div class="details-header">
                         <h3>
@@ -110,7 +101,6 @@
                         </h3>
                     </div>
                     <div class="details-content">
-                        <!-- Parsing Method Badge moved here -->
                         <div class="parsing-method-section">
                             {% if result.parsing_method == 'ai' %}
                             <span class="method-badge ai">
@@ -167,7 +157,6 @@
                     </div>
                 </div>
 
-                <!-- Right Column: Clickable Map -->
                 <div class="map-card">
                     <div class="map-header">
                         <h3>
@@ -176,20 +165,17 @@
                         </h3>
                     </div>
                     <div class="map-container" id="results-map-container">
-                        <!-- Map placeholder when no coordinates -->
                         <div class="map-placeholder" id="map-placeholder" {% if result.latitude and result.longitude %}style="display: none;"{% endif %}>
                             <div>
                                 <i class="fas fa-map"></i>
                                 <p>Map unavailable - No coordinates</p>
                             </div>
                         </div>
-                        <!-- The interactive map container -->
                         <div id="clickable-map" style="width: 100%; height: 100%; {% if not result.latitude or not result.longitude %}display: none;{% endif %}"></div>
                     </div>
                 </div>
             </div>
             {% else %}
-            <!-- Empty State -->
             <div class="empty-state">
                 <div class="empty-icon">🔍</div>
                 <p>Enter an address to get started</p>
@@ -199,7 +185,6 @@
         </div>
     </div>
     
-    <!-- JavaScript -->
     <script src="{% static 'locator/js/ai_locator1.js' %}?v=20240224"></script>
     <script src="{% static 'locator/js/ajax_csrf.js' %}?v=20240224"></script>
 </body>

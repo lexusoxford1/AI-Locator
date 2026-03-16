@@ -1,5 +1,3 @@
-# locator/groq_address.py
-
 from groq import Groq
 from django.conf import settings
 import os
@@ -7,7 +5,6 @@ import json
 import re
 from .datasets import TOURIST_SPOTS_DATA
 
-# small dictionary for Philippine ZIP codes for inference
 PH_ZIP_MAP = {
     "Calamba": "4027",
     "Manila": "1000",
@@ -42,10 +39,6 @@ class GroqAddressCompleter:
         self._client = None
         self.model = "llama-3.1-8b-instant"
 
-    # =============================
-    # CLIENT INITIALIZATION
-    # =============================
-
     def _get_client(self):
         if self._client is None:
             api_key = getattr(settings, "GROQ_API_KEY", None) or os.environ.get("GROQ_API_KEY")
@@ -53,10 +46,6 @@ class GroqAddressCompleter:
                 return None
             self._client = Groq(api_key=api_key)
         return self._client
-
-    # =============================
-    # PUBLIC METHOD
-    # =============================
 
     def complete_address(self, query: str):
         client = self._get_client()
@@ -104,7 +93,6 @@ Required JSON:
 
                 content = response.choices[0].message.content.strip()
 
-                # Extract JSON safely
                 json_match = re.search(r"\{.*\}", content, re.DOTALL)
                 if json_match:
                     parsed = json.loads(json_match.group())
@@ -113,12 +101,7 @@ Required JSON:
             except Exception:
                 pass
 
-        # Fallback if AI fails
         return self._fallback_from_dataset(query)
-
-    # =============================
-    # VALIDATION LAYER
-    # =============================
 
     def _validate_response(self, data: dict):
         required_keys = [
@@ -140,32 +123,24 @@ Required JSON:
 
         data["country"] = "Philippines"
 
-        # Infer ZIP if missing
         if not data.get("zip_code") or not re.match(r"^\d{4}$", str(data["zip_code"])):
             city = data.get("city")
             data["zip_code"] = PH_ZIP_MAP.get(city, "")
 
-        # Confidence
         try:
             data["confidence"] = int(data["confidence"])
         except:
             data["confidence"] = 50
         data["confidence"] = max(0, min(100, data["confidence"]))
 
-        # Address type validation
         if data["address_type"] not in ["street_address", "landmark", "area"]:
             data["address_type"] = "street_address"
 
-        # Ensure strings are not None
         for field in ["full_address", "street", "city", "province", "zip_code"]:
             if data[field] is None:
                 data[field] = ""
 
         return data
-
-    # =============================
-    # DATASET FALLBACK
-    # =============================
 
     def _fallback_from_dataset(self, query: str):
         query_lower = query.lower()
@@ -186,10 +161,6 @@ Required JSON:
                 }
         return self._generic_fallback(query)
 
-    # =============================
-    # GENERIC FALLBACK
-    # =============================
-
     def _generic_fallback(self, query: str):
         return {
             "full_address": query,
@@ -203,10 +174,6 @@ Required JSON:
             "confidence": 40,
             "address_type": "area",
         }
-
-    # =============================
-    # EMPTY RESPONSE
-    # =============================
 
     def _empty_response(self):
         return {

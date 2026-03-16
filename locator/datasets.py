@@ -1,5 +1,4 @@
 TOURIST_SPOTS_DATA = [
-    # Tourist spots
     {"keywords":["bahay ni rizal in calamba","calamba rizal"],
      "text":"6578+FMH, F. Mercado St, Calamba, 4027 Laguna, Philippines",
      "street":"F. Mercado Street","city":"Calamba","province":"Laguna","lat":14.2136,"lng":121.1667},

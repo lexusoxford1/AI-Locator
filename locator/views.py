@@ -1,4 +1,3 @@
-# locator/views.py
 from django.shortcuts import render
 from django.conf import settings
 from .models import Address
@@ -11,12 +10,10 @@ import json
 import logging
 import requests
 
-# Import ONLY the Groq address completer
 from .groq_address import GroqAddressCompleter
 
 logger = logging.getLogger(__name__)
 
-# Initialize the address completer (only Groq, no Geoapify)
 address_completer = GroqAddressCompleter()
 
 def locator_view(request):
@@ -34,11 +31,9 @@ def locator_view(request):
                 print("No address provided")
                 return render(request, "locator/locator.html", {"result": {}, "suggestion": None})
 
-            # Check if user selected autocomplete (lat/lng present)
             lat = request.POST.get("latitude")
             lng = request.POST.get("longitude")
             if lat and lng:
-                # User selected from autocomplete (can be AI suggestion or Google)
                 result = {
                     "address_line": address,
                     "street": request.POST.get("street", ""),
@@ -53,8 +48,6 @@ def locator_view(request):
                 }
                 print(f"Using user-selected autocomplete data: {result}")
 
-           
-            # STRICT GOOGLE MODE
             else:
                 print(f"Google geocoding address: {address}")
                 geo_data = geocode_address(address, settings.GOOGLE_GEOCODING_API_KEY)
@@ -67,7 +60,6 @@ def locator_view(request):
                     suggestion = geo_data.get("formatted_address")
                     print(f"Google geocoding successful: {result}")
                 else:
-                    # Fallback to local DB
                     fallback = get_local_address_info(address)
                     if fallback:
                         result.update(fallback)
@@ -75,7 +67,6 @@ def locator_view(request):
                         result["parsing_method"] = "local"
                         print(f"Using local fallback: {result}")
 
-            # Save to database only if lat/lng exists
             if result.get("latitude") and result.get("longitude"):
                 try:
                     address_obj = Address.objects.create(
@@ -186,7 +177,6 @@ def ai_complete_address(request):
         if not query:
             return JsonResponse({'error': 'No address provided'}, status=400)
         
-        # Complete the address using Groq
         result = address_completer.complete_address(query)
         
         if result:
@@ -225,17 +215,13 @@ def groq_location_from_coordinates(request):
         if not lat or not lng:
             return JsonResponse({'error': 'Missing coordinates'}, status=400)
         
-        # Format as a query for the address completer
         query = f"{lat}, {lng}"
         
-        # Get location understanding from Groq
         result = address_completer.complete_address(query)
         
         if result and result.get('results') and len(result['results']) > 0:
             best = result['results'][0]
             
-            # Add AI-generated insights
-            # You can enhance this with more context from Groq
             response_data = {
                 'street': best.get('street', ''),
                 'city': best.get('city', ''),
@@ -251,7 +237,6 @@ def groq_location_from_coordinates(request):
             print(f"Groq location result: {response_data}")
             return JsonResponse(response_data)
         else:
-            # Return basic coordinate info if Groq fails
             return JsonResponse({
                 'street': '',
                 'city': '',
@@ -283,12 +268,10 @@ import json
 import logging
 import requests
 
-# Import ONLY the Groq address completer
 from .groq_address import GroqAddressCompleter
 
 logger = logging.getLogger(__name__)
 
-# Initialize the address completer (only Groq, no Geoapify)
 address_completer = GroqAddressCompleter()
 
 def locator_view(request):
@@ -306,11 +289,9 @@ def locator_view(request):
                 print("No address provided")
                 return render(request, "locator/locator.html", {"result": {}, "suggestion": None})
 
-            # Check if user selected autocomplete (lat/lng present)
             lat = request.POST.get("latitude")
             lng = request.POST.get("longitude")
             if lat and lng:
-                # User selected from autocomplete (can be AI suggestion or Google)
                 result = {
                     "address_line": address,
                     "street": request.POST.get("street", ""),
@@ -325,8 +306,6 @@ def locator_view(request):
                 }
                 print(f"Using user-selected autocomplete data: {result}")
 
-           
-            # STRICT GOOGLE MODE
             else:
                 print(f"Google geocoding address: {address}")
                 geo_data = geocode_address(address, settings.GOOGLE_GEOCODING_API_KEY)
@@ -339,7 +318,6 @@ def locator_view(request):
                     suggestion = geo_data.get("formatted_address")
                     print(f"Google geocoding successful: {result}")
                 else:
-                    # Fallback to local DB
                     fallback = get_local_address_info(address)
                     if fallback:
                         result.update(fallback)
@@ -347,7 +325,6 @@ def locator_view(request):
                         result["parsing_method"] = "local"
                         print(f"Using local fallback: {result}")
 
-            # Save to database only if lat/lng exists
             if result.get("latitude") and result.get("longitude"):
                 try:
                     address_obj = Address.objects.create(
@@ -426,7 +403,6 @@ def ai_address_suggestions(request):
         if not query or len(query) < 2:
             return JsonResponse({'suggestions': []})
         
-        # Get suggestions from Groq
         suggestions = address_completer.get_suggestions(query)
         print(f"Found {len(suggestions)} suggestions")
         
@@ -497,16 +473,13 @@ def groq_location_from_coordinates(request):
         if not lat or not lng:
             return JsonResponse({'error': 'Missing coordinates'}, status=400)
         
-        # Format as a query for the address completer
         query = f"{lat}, {lng}"
         
-        # Get location understanding from Groq
         result = address_completer.complete_address(query)
         
         if result and result.get('results') and len(result['results']) > 0:
             best = result['results'][0]
             
-            # Add AI-generated insights
             response_data = {
                 'street': best.get('street', ''),
                 'city': best.get('city', ''),
@@ -515,14 +488,13 @@ def groq_location_from_coordinates(request):
                 'zip_code': best.get('postcode', ''),
                 'full_address': best.get('formatted', f"{lat}, {lng}"),
                 'confidence': best.get('rank', {}).get('confidence', 0.85) * 100,
-                'landmarks': [],  # Can be populated if your Groq completer returns this
+                'landmarks': [], 
                 'description': best.get('description', f"Location at coordinates {lat}, {lng}")
             }
             
             print(f"Groq location result: {response_data}")
             return JsonResponse(response_data)
         else:
-            # Return basic coordinate info if Groq fails
             return JsonResponse({
                 'street': '',
                 'city': '',

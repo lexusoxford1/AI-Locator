@@ -1,6 +1,4 @@
-# locator/models.py
 from django.db import models
-
 class Address(models.Model):
     address_line = models.CharField(max_length=255)
     street = models.CharField(max_length=255, blank=True)
